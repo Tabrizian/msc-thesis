@@ -253,7 +253,7 @@
 
 %% Default settings: standard options followed by ut-thesis options.
 \ExecuteOptions{letterpaper,oneside,openright}
-\ExecuteOptions{normalmargins,onehalfspaced,singlespacednotes}
+\ExecuteOptions{normalmargins,doublespaced,singlespacednotes}
 
 %% Process options.
 \ProcessOptions

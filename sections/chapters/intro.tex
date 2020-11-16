@@ -1,0 +1,41 @@
+\chapter{Introduction}
+\label{chap:introduction}
+Machine Learning has transformed the world. Nowadays, there are various
+machine learning models used in production systems. Models that provide image
+classification, movie recommendations, and even photography. These
+advancements have been made possible thanks to the specialized hardwares such
+as GPUs, TPUs\cite{TPU}, and FPGAs. The process of training these models is a
+trial-and-error approach combined with intuition. It requires tuning a large
+number of hyperparameters to achieve the desired accuracy. To achieve the
+best accuracy in the shortest amount of time, usually many similar jobs are
+dispatched that only change a single hyperparameter. Research institutes and
+companies have access to compute clusters that provide 100s to 1000s of GPUs.
+It will require a scheduler to map the jobs to the resources. The
+users of the jobs need to specify the resource requirements of the jobs too.
+The scheduler will take in these specifications and map it to the the available
+resources. GPUs with their unique characteristics add a new dimension to this problem.
+The main problem with the GPUs is that they were not originally designed for
+multi-tasking. Unlike conventional resources like CPUs and main memory, that
+have hardware support for resource sharing, GPUs were originally designed for
+single process use. The assumption was that the application is able to 
+effectively use all the resources on a GPU and adding another application to
+the GPU will hinder the performance. However, starting from the Volta\cite{Volta}
+architecture GPUs now include hardware support for execution of multiple processes
+together.
+
+In this dissertation, we explore the effect of co-locating multiple deep learning
+training jobs together. We devise metrics that guide the scheduler on which workloads
+can benefit from co-location and which workloads should not be placed together as it 
+will decrease the training speed for these jobs. Additionally, we study the potential
+reasons behind the incompatibility of the workloads and how they can be used to predict
+the incompatible jobs.
+
+The next chapter gives an overview of the scheduling algorithms in other
+domains and an introduction on how GPUs are used for general processing.
+\Cref{chap:motivation} discusses the motivation for co-location of the DL
+jobs. \Cref{chap:design} discusses the design of our proposed scheduler that
+employs co-location to improve the job completion time (JCT).
+\Cref{chap:evaluation} provides the experimental results for this design and
+how it compares to the schedulers that do not employ co-location. Finally,
+\Cref{chap:future} concludes the thesis and provides future directions on how
+this work can be extended.

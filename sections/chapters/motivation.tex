@@ -1,0 +1,117 @@
+\chapter{Motivation and Related Work}
+\label{chap:motivation}
+
+\section{GPUs}
+
+GPUs were among the first accelerators to be introduced alongside with CPUs.
+GPUs are throughput optimized in contrast to the CPUs which are latency
+optimized. They consist of many cheap cores that can perform large number of
+operations in parallel. They also have a large memory bandwidth that helps
+them bring data into these cores in efficiently.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.4\textwidth]{figs/gpu}
+    \caption{GPU Architecture}
+    \label{fig:gpu-architecture}
+\end{figure}
+\Cref{fig:gpu-architecture} shows a simple illustration of the GPU
+architecture. GPUs consist of several \textit{Streaming Multiprocessors
+(SMs)}. SMs are the processing units in GPUs. Each of the SMs contains
+various cores designed for operations on different data types. For example,
+V100 GPU contains 84 SMs where each of them has 64 FP32 cores, 64 INT32
+cores, 32 FP64 cores, and 8 tensor cores\cite{Volta}. In
+\cref{fig:gpu-architecture}, \textit{CC} refers to the CUDA cores which
+consists of all the cores present in each SM except the tensor cores. Tensor
+Cores are abbreviated using \textit{TC}. They provide accelerated performance
+for the reduced precision operations which are present in the Deep Learning
+workloads. They were introduced in the Volta\cite{Volta} microarchitecture in
+2017.
+
+\subsection{GPU Memory and Compute Capabilities}
+
+GPU memory and compute capabilities have increased by a tremendous amount
+over time.
+
+
+\subsection{CUDA}
+
+CUDA is a set of extensions to C/C++ to enable easier application development
+in GPUs. CUDA also introduces a set of language abstractions that make it
+easier to think about GPU programs. GPU accelerated programs use many threads
+to perform the computation. CUDA groups the threads into \textit{thread
+blocks} and \textit{grid blocks}. A \textit{thread block} is a group of
+threads which are guaranteed to be running on the same SM. A \textit{grid
+block} is a group of thread blocks which contain all the processing necessary
+for the computation of a given \textit{kernel}. A \textit{kernel} is a
+function that runs on a GPU. Both thread blocks and grid blocks can be
+represented using three dimensions. \Cref{fig:threadblock} shows the difference
+between a thread block, grid block, and a thread.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/threadblock}
+    \caption{Grid Block vs Thread Block vs Thread}
+    \label{fig:threadblock}
+\end{figure}
+
+\subsection{Thread Block Scheduling}
+
+There are various constraints that limit the scheduling of thread blocks into
+the SMs. Amount of the registers, shared memory, and number of threads inside
+a thread block are among the factors that limit the number of blocks that
+can be scheduled into a single SM. Since there is a limited amount of these
+resources available in each SM, the number of thread blocks will be limited
+to the available resources. Apart from that, different GPU architectures 
+have hard limits on the number of thread blocks and threads that can
+be scheduled on a given SM. All these factors lead to a metric called
+\textit{Theoretical Occupancy}\cite{Occupancy} of a kernel. Theoretical
+Occupancy is a metric in percent which determines the percentage of active
+warps in comparison with the total warps that could be scheduled on a given
+GPU. There is another concept called \textit{Achieved Occupancy}. Achieved
+Occupancy measures the scheduled number of warps when the kernel is
+actually running on the GPU. This can be different from the Theoretical
+Occupancy because a given thread in warp might we stalled on a memory load
+and is not yet ready to be scheduled. If there is not enough warps in flight
+ready to be scheduled instead of the stalled thread block, the achieved
+occupancy will be lower than the Theoretical Occupancy. Theoretical Occupancy
+serves as the upper bound for the Achieved Occupancy.
+
+
+\section{Related Work}
+
+In the area of GPU schedulers for deep learning workloads there are various
+related works to the work presented in this thesis. Optimus \cite{Optimus} is
+one of the earlier works in this area. The main goal of this work is which
+job should be given more workers so that the total job completion time for a
+set of jobs is minimized. It is assumed that the jobs use the Parameter
+Server \cite{ParameterServer} architecture. They learn the convergence curve
+for a given job to predict the number of required iterations until the
+completion. Using this information, they can measure how long the job is
+going to last. Then, they create a heuristic algorithm that increases the
+number of workers or parameter servers for a job that gains more speed up
+compared to the other jobs. This work is complementary to our work. We can
+augment their techniques with our co-location algorithms to better utilize
+the GPUs.
+
+Tiresias \cite{Tiresias} presented a more realistic scheduling algorithm.
+Tiresias is able to use the historical data of the jobs to minimize the job
+completion time. They do not adaptively change the number of workers for a 
+given job. This is a more realistic approach since increasing the number
+of workers affects the accuracy and may require retuning all the
+hyperparameters. They do not consider the packing of multiple jobs on the
+same GPU.
+
+Gandiva \cite{Gandiva} introduced a fast context switch mechanism to avoid
+starvation of the jobs in deep learning clusters. They observed that the 
+GPU memory usage of a job is not constant during the training and is minimum
+between the iterations. While this is not true for PyTorch and Tensorflow
+frameworks, some frameworks like MXNet deallocate the memory when it is
+no longer needed. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/nnmemory}
+    \caption{Memory Allocation in Forward and Backward Pass}
+    \label{fig:threadblock}
+\end{figure}
