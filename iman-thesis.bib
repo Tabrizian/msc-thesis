@@ -92,3 +92,129 @@
   publisher = {{USENIX} Association},
   month     = oct
 }
+
+@article{CNN,
+  title     = {Backpropagation applied to handwritten zip code recognition},
+  author    = {LeCun, Yann and Boser, Bernhard and Denker, John S and Henderson, Donnie and Howard, Richard E and Hubbard, Wayne and Jackel, Lawrence D},
+  journal   = {Neural computation},
+  volume    = {1},
+  number    = {4},
+  pages     = {541--551},
+  year      = {1989},
+  publisher = {MIT Press}
+}
+
+@inproceedings{Gavel,
+  author    = {Deepak Narayanan and Keshav Santhanam and Fiodar Kazhamiaka and Amar Phanishayee and Matei Zaharia},
+  title     = {Heterogeneity-Aware Cluster Scheduling Policies for Deep Learning Workloads},
+  booktitle = {14th {USENIX} Symposium on Operating Systems Design and Implementation ({OSDI} 20)},
+  year      = {2020},
+  isbn      = {978-1-939133-19-9},
+  pages     = {481--498},
+  url       = {https://www.usenix.org/conference/osdi20/presentation/narayanan-deepak},
+  publisher = {{USENIX} Association},
+  month     = nov
+}
+
+@inproceedings{Chic,
+  author    = {Gong, Yifan and Li, Baochun and Liang, Ben and Zhan, Zheng},
+  title     = {Chic: Experience-Driven Scheduling in Machine Learning Clusters},
+  year      = {2019},
+  isbn      = {9781450367783},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3326285.3329065},
+  doi       = {10.1145/3326285.3329065},
+  abstract  = {Large-scale machine learning (ML) models are routinely trained in a distributed fashion, due to their increasing complexity and data sizes. In a shared cluster handling multiple distributed learning workloads with a parameter server framework, it is important to determine the adequate number of concurrent workers and parameter servers for each ML workload over time, in order to minimize the average completion time and increase resource utilization. Existing schedulers for machine learning workloads involve meticulously designed heuristics. However, as the execution environment is highly complex and dynamic, it is challenging to construct an accurate model to make online decisions. In this paper, we design an experience-driven approach that learns to manage the cluster directly from experience rather than using a mathematical model. We propose Chic, a scheduler that is tailored for scheduling machine learning workloads in a cluster by leveraging deep reinforcement learning techniques. With our design of the state space, action space, and reward function, Chic trains a deep neural network with a modified version of the cross-entropy method to approximate the policy for assigning workers and parameter servers for future workloads based on the experience of the agent. Furthermore, a simplified version named Chic-Pair with a shorter training time for the policy is purposed by assigning workers and parameter servers in a pair. We compare Chic and Pair with state-of-the-art heuristics, and our results show that Chic and Chic-Pair are able to reduce the average training time significantly for machine learning workloads under a wide variety of conditions.},
+  booktitle = {Proceedings of the International Symposium on Quality of Service},
+  articleno = {30},
+  numpages  = {10},
+  keywords  = {workload scheduling, deep reinforcement learning, distributed machine learning},
+  location  = {Phoenix, Arizona},
+  series    = {IWQoS '19}
+}
+
+@misc{MPS,
+  author       = {},
+  title        = {Multi-Process Service},
+  howpublished = {\url{https://docs.nvidia.com/deploy/pdf/CUDA_Multi_Process_Service_Overview.pdf}},
+  month        = {},
+  year         = {},
+  note         = {(Accessed on 11/16/2020)}
+}
+
+@inproceedings{10.1145/2541940.2541941,
+author = {Delimitrou, Christina and Kozyrakis, Christos},
+title = {Quasar: Resource-Efficient and QoS-Aware Cluster Management},
+year = {2014},
+isbn = {9781450323055},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2541940.2541941},
+doi = {10.1145/2541940.2541941},
+abstract = {Cloud computing promises flexibility and high performance for users and high cost-efficiency for operators. Nevertheless, most cloud facilities operate at very low utilization, hurting both cost effectiveness and future scalability.We present Quasar, a cluster management system that increases resource utilization while providing consistently high application performance. Quasar employs three techniques. First, it does not rely on resource reservations, which lead to underutilization as users do not necessarily understand workload dynamics and physical resource requirements of complex codebases. Instead, users express performance constraints for each workload, letting Quasar determine the right amount of resources to meet these constraints at any point. Second, Quasar uses classification techniques to quickly and accurately determine the impact of the amount of resources (scale-out and scale-up), type of resources, and interference on performance for each workload and dataset. Third, it uses the classification results to jointly perform resource allocation and assignment, quickly exploring the large space of options for an efficient way to pack workloads on available resources. Quasar monitors workload performance and adjusts resource allocation and assignment when needed. We evaluate Quasar over a wide range of workload scenarios, including combinations of distributed analytics frameworks and low-latency, stateful services, both on a local cluster and a cluster of dedicated EC2 servers. At steady state, Quasar improves resource utilization by 47% in the 200-server EC2 cluster, while meeting performance constraints for workloads of all types.},
+booktitle = {Proceedings of the 19th International Conference on Architectural Support for Programming Languages and Operating Systems},
+pages = {127–144},
+numpages = {18},
+keywords = {quality of service, resource allocation and assignment, resource efficiency, cloud computing, cluster management, datacenters},
+location = {Salt Lake City, Utah, USA},
+series = {ASPLOS '14}
+}
+
+@article{10.1145/2654822.2541941,
+author = {Delimitrou, Christina and Kozyrakis, Christos},
+title = {Quasar: Resource-Efficient and QoS-Aware Cluster Management},
+year = {2014},
+issue_date = {March 2014},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {42},
+number = {1},
+issn = {0163-5964},
+url = {https://doi.org/10.1145/2654822.2541941},
+doi = {10.1145/2654822.2541941},
+abstract = {Cloud computing promises flexibility and high performance for users and high cost-efficiency for operators. Nevertheless, most cloud facilities operate at very low utilization, hurting both cost effectiveness and future scalability.We present Quasar, a cluster management system that increases resource utilization while providing consistently high application performance. Quasar employs three techniques. First, it does not rely on resource reservations, which lead to underutilization as users do not necessarily understand workload dynamics and physical resource requirements of complex codebases. Instead, users express performance constraints for each workload, letting Quasar determine the right amount of resources to meet these constraints at any point. Second, Quasar uses classification techniques to quickly and accurately determine the impact of the amount of resources (scale-out and scale-up), type of resources, and interference on performance for each workload and dataset. Third, it uses the classification results to jointly perform resource allocation and assignment, quickly exploring the large space of options for an efficient way to pack workloads on available resources. Quasar monitors workload performance and adjusts resource allocation and assignment when needed. We evaluate Quasar over a wide range of workload scenarios, including combinations of distributed analytics frameworks and low-latency, stateful services, both on a local cluster and a cluster of dedicated EC2 servers. At steady state, Quasar improves resource utilization by 47% in the 200-server EC2 cluster, while meeting performance constraints for workloads of all types.},
+journal = {SIGARCH Comput. Archit. News},
+month = feb,
+pages = {127–144},
+numpages = {18},
+keywords = {resource allocation and assignment, resource efficiency, cloud computing, cluster management, datacenters, quality of service}
+}
+
+@article{Quasar,
+  author     = {Delimitrou, Christina and Kozyrakis, Christos},
+  title      = {Quasar: Resource-Efficient and QoS-Aware Cluster Management},
+  year       = {2014},
+  issue_date = {April 2014},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {49},
+  number     = {4},
+  issn       = {0362-1340},
+  url        = {https://doi.org/10.1145/2644865.2541941},
+  doi        = {10.1145/2644865.2541941},
+  abstract   = {Cloud computing promises flexibility and high performance for users and high cost-efficiency for operators. Nevertheless, most cloud facilities operate at very low utilization, hurting both cost effectiveness and future scalability.We present Quasar, a cluster management system that increases resource utilization while providing consistently high application performance. Quasar employs three techniques. First, it does not rely on resource reservations, which lead to underutilization as users do not necessarily understand workload dynamics and physical resource requirements of complex codebases. Instead, users express performance constraints for each workload, letting Quasar determine the right amount of resources to meet these constraints at any point. Second, Quasar uses classification techniques to quickly and accurately determine the impact of the amount of resources (scale-out and scale-up), type of resources, and interference on performance for each workload and dataset. Third, it uses the classification results to jointly perform resource allocation and assignment, quickly exploring the large space of options for an efficient way to pack workloads on available resources. Quasar monitors workload performance and adjusts resource allocation and assignment when needed. We evaluate Quasar over a wide range of workload scenarios, including combinations of distributed analytics frameworks and low-latency, stateful services, both on a local cluster and a cluster of dedicated EC2 servers. At steady state, Quasar improves resource utilization by 47% in the 200-server EC2 cluster, while meeting performance constraints for workloads of all types.},
+  journal    = {SIGPLAN Not.},
+  month      = feb,
+  pages      = {127–144},
+  numpages   = {18},
+  keywords   = {quality of service, cluster management, resource allocation and assignment, resource efficiency, cloud computing, datacenters}
+}
+
+@inproceedings{10.1145/2451116.2451125,
+  author    = {Delimitrou, Christina and Kozyrakis, Christos},
+  title     = {Paragon: QoS-Aware Scheduling for Heterogeneous Datacenters},
+  year      = {2013},
+  isbn      = {9781450318709},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/2451116.2451125},
+  doi       = {10.1145/2451116.2451125},
+  abstract  = {Large-scale datacenters (DCs) host tens of thousands of diverse applications each day. However, interference between colocated workloads and the difficulty to match applications to one of the many hardware platforms available can degrade performance, violating the quality of service (QoS) guarantees that many cloud workloads require. While previous work has identified the impact of heterogeneity and interference, existing solutions are computationally intensive, cannot be applied online and do not scale beyond few applications.We present Paragon, an online and scalable DC scheduler that is heterogeneity and interference-aware. Paragon is derived from robust analytical methods and instead of profiling each application in detail, it leverages information the system already has about applications it has previously seen. It uses collaborative filtering techniques to quickly and accurately classify an unknown, incoming workload with respect to heterogeneity and interference in multiple shared resources, by identifying similarities to previously scheduled applications. The classification allows Paragon to greedily schedule applications in a manner that minimizes interference and maximizes server utilization. Paragon scales to tens of thousands of servers with marginal scheduling overheads in terms of time or state.We evaluate Paragon with a wide range of workload scenarios, on both small and large-scale systems, including 1,000 servers on EC2. For a 2,500-workload scenario, Paragon enforces performance guarantees for 91% of applications, while significantly improving utilization. In comparison, heterogeneity-oblivious, interference-oblivious and least-loaded schedulers only provide similar guarantees for 14%, 11% and 3% of workloads. The differences are more striking in oversubscribed scenarios where resource efficiency is more critical.},
+  booktitle = {Proceedings of the Eighteenth International Conference on Architectural Support for Programming Languages and Operating Systems},
+  pages     = {77–88},
+  numpages  = {12},
+  keywords  = {heterogeneity, cloud computing, scheduling, interference, datacenter, qos},
+  location  = {Houston, Texas, USA},
+  series    = {ASPLOS '13}
+}
