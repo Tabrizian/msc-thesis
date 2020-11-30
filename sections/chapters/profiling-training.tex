@@ -1,0 +1,188 @@
+\chapter{Training Job Co-location}
+\label{chap:profiling-training}
+
+
+\section{Modeling Co-location Speed Up}
+Since the individual jobs may be slowed down when being co-located, we need
+to have aggregate formulation for representing the speed up of multiple jobs
+on a single GPU and compare it with the case when they run individual. We
+propose a simple speed up factor that makes it easy to measure the amount of
+speed up, compared to the original case.
+
+\subsection{Problem Formulation}
+We are given n jobs that can be co-located all together on a single GPU. The
+time that it takes for a single iteration of job $i$ to complete when running
+alone is $t_i$. $t'_{i, S}$ denotes the time for single iteration of job $i$
+to complete when being co-located with jobs that belong to $S \subset J$. J
+is the universal set containing all the jobs. We are interested in cases
+where \cref{eq:speedup} is true.
+
+\begin{equation}
+    \delta = \frac{\sum_{j \in S} t_i}{\max_{j \in S} t'_{j,s}} \geq 1
+    \label{eq:speedup}
+\end{equation}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/colocationmodeling}
+    \caption{Co-location of Multiple Jobs}
+    \label{fig:co-location-modeling}
+\end{figure}
+
+\Cref{fig:co-location-modeling} illustrates why this formulation is valid.
+As shown in \cref{fig:co-location-modeling}, an individual $t'_i$ might
+be greater than $t_i$ but because all the jobs have started together,
+as long as the longest job takes less than the sum of all the jobs,
+co-location is better than running alone.
+
+\subsection{Value of $\delta$ in the Co-location of Various Deep Learning
+Models} We run a series of experiments to explore the value of $\delta$
+mentioned in \cref{eq:speedup}. The models we used here are two variations of
+ResNet~\cite{resnet} models, two variation of VGG~\cite{vgg} models, and a
+more recent image classification architectures named SE-Net~\cite{senet}. We
+run all the possible combinations of these models. These combinations
+include cases of running more than two jobs together. Since we are studying
+five models, the total number of models used is equal to ${5 \choose 2} = 10$.
+
+\begin{table}
+    \centering
+    \begin{tabular}{cc}
+        \hline
+        Model Name & Number of Parameters \\ \hline \hline
+        VGG-11 & 1 \\ \hline
+        VGG-19 & 1 \\ \hline
+        ResNet-18 & 1 \\ \hline
+        SENet-18 & 1 \\ \hline
+
+    \end{tabular}
+    \caption{Characteristics of the models used in the experiments}
+    \label{tab:exp-models}
+\end{table}
+
+\begin{table}
+    \centering
+    \begin{tabular}{cc}
+        \hline
+        Experiment Number & Models \\ \hline \hline
+        0 & vgg19, resnet50 \\ \hline
+        1 & se\_resnet18, resnet50 \\ \hline
+        2 & vgg11, vgg19 \\ \hline
+        3 & resnet18, resnet50 \\ \hline
+        4 & vgg11, resnet50 \\ \hline
+        5 & resnet18, vgg11 \\ \hline
+        6 & vgg19, se\_resnet18 \\ \hline
+        7 & vgg11, se\_resnet18 \\ \hline
+        8 & resnet18, se\_resnet18 \\ \hline
+        9 & resnet18, vgg19 \\ \hline
+    \end{tabular}
+    \caption{Description of the experiment numbers}
+    \label{tab:exp-description}
+\end{table}
+
+\Cref{fig:layer-2-bs-inter} shows the value $\delta$ when 2 jobs are placed
+together. The X axis shows the experiment number for all the possible
+combinations of the models described in \cref{tab:exp-models}. As expected,
+smaller batch sizes provide higher speedups compared to large batch sizes.
+These results are for a per iteration speedup of the models. We sampled
+10 iterations of the training and calculated the average of these samples.
+We used the mean as the value for $t'$ and $t$ values in \cref{eq:speedup}.
+In all of these experiments, MPS is \textbf{not} enabled. Using 512 as the
+batch size, leads to minor slowdown in the models that we studied.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/experiments/layer-2-bs-pytorch}
+    \caption{Co-locating 2 jobs together using various batch sizes. x-axis
+    shows the experiment number described in \cref{tab:exp-description}}
+    \label{fig:layer-2-bs-inter}
+\end{figure}
+
+\Cref{fig:layers-bs-64-inter,fig:layers-bs-128-inter,fig:layers-bs-256-inter}
+show the results when the batch size is constant and we are running 2 or 3
+jobs together. For small batch sizes, running 3 jobs together gives speedup
+compared to large batch sizes. \Cref{fig:layers-bs-64-inter} shows 25
+percent more speedup compared to running three batch sizes together. Note
+that the speedup values show the amount of speedup that you can gain
+on a \textbf{per iteration} basis.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/experiments/layers-bs-64-pytorch}
+    \caption{Co-location of 2 or 3 jobs together when the batch size is equal
+    to 64. x-axis shows the experiment number described in
+    \cref{tab:exp-description}}
+    \label{fig:layers-bs-64-inter}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/experiments/layers-bs-128-pytorch}
+    \caption{Co-location of 2 or 3 jobs together when the batch size is equal
+    to 128. x-axis shows the experiment number described in
+    \cref{tab:exp-description}}
+    \label{fig:layers-bs-128-inter}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/experiments/layers-bs-256-pytorch}
+    \caption{Co-location of 2 or 3 jobs together when the batch size is equal
+    to 256. x-axis shows the experiment number described in
+    \cref{tab:exp-description}}
+    \label{fig:layers-bs-256-inter}
+\end{figure}
+
+\section{Profiling Training Jobs}
+
+You might notice that even when co-locating a set of jobs with fixed batch
+sizes, some jobs are more compatible with each other leading to higher boost
+in the speedup, while other jobs are not compatible. We run a series of more
+detailed profiling to study how individual kernels are using the GPU and
+finding where is the potential bottleneck. We used NVIDIA Nsight
+Compute~\cite{NsightCompute} to perform these profiling experiments.
+
+\subsection{Memory Utilization}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/experiments/wa-mem-util}
+    \caption{Weighted average of the memory utilization of the models using
+    various batch sizes}
+    \label{fig:weighted-mem-util}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/experiments/memory-util-histo}
+    \caption{Histogram of the memory utilization of the kernels for models
+    under study. The batch size is equal to 64. If a kernel is run multiple
+    times, the results are not grouped together and is assumed as a separate
+    kernel. The unit for x-axis is in percent and the y-axis is log based.
+    This graph includes the results for two iterations of training. The
+    kernels were analyzed individually without sharing the resources with any
+    other application.}
+    \label{fig:memory-util-histo}
+\end{figure}
+
+\subsection{Compute Utilization}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/experiments/wa-kernel-occupancy}
+    \caption{Weighted average of the kernel utilization of the models using
+    various batch sizes}
+    \label{fig:weighted-compute-util}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/experiments/occupancy-histo}
+    \caption{Histogram of the achieved occupancy of the kernels for models
+    under study. The batch size is equal to 64. If a kernel is run multiple
+    times, the results are not grouped together and is assumed as a separate
+    kernel. The unit for x-axis is in percent and the y-axis is log based.
+    This graph includes the results for two iterations of training.The
+    kernels were analyzed individually without sharing the resources with any
+    other application.}
+    \label{fig:occupancy-histo}
+\end{figure}

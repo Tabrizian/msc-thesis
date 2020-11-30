@@ -1,0 +1,191 @@
+\chapter{Background}
+\label{chap:background}
+
+\section{GPUs}
+
+GPUs were among the first accelerators to be introduced alongside with CPUs.
+GPUs are throughput optimized in contrast to the CPUs which are latency
+optimized. They consist of many cheap cores that can perform large number of
+operations in parallel. They also have a large memory bandwidth that helps
+them bring data into these cores in efficiently.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.4\textwidth]{figs/gpu}
+    \caption{GPU Architecture}
+    \label{fig:gpu-architecture}
+\end{figure}
+\Cref{fig:gpu-architecture} shows a simple illustration of the GPU
+architecture. GPUs consist of several \textit{Streaming Multiprocessors
+(SMs)}. SMs are the processing units in GPUs. Each of the SMs contains
+various cores designed for operations on different data types. For example,
+V100 GPU contains 84 SMs where each of them has 64 FP32 cores, 64 INT32
+cores, 32 FP64 cores, and 8 tensor cores\cite{Volta}. In
+\cref{fig:gpu-architecture}, \textit{CC} refers to the CUDA cores which
+consists of all the cores present in each SM except the tensor cores. Tensor
+Cores are abbreviated using \textit{TC}. They provide accelerated performance
+for the reduced precision operations which are present in the Deep Learning
+workloads. They were introduced in the Volta\cite{Volta} microarchitecture in
+2017.
+
+\subsection{GPU Memory and Compute Capabilities}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/gpus-overtime.pdf}
+    \caption{GPU Capabilities over time}
+    \label{fig:gpu-overtime}
+\end{figure}
+
+GPUs memory bandwidth and compute capabilities have increased by a tremendous
+amount over time. \Cref{fig:gpu-overtime} shows this trend in the Tesla GPU
+class. Tesla GPUs are NVIDIA's data center GPU class. The most recent data
+center GPU class as of writing this thesis is the A100 GPU with the ability
+to perform 312 TFLOPS half-precision operations. These increases in the compute
+and memory capabilities have made it harder for application developers to fully
+saturate the GPU resources. In this thesis, we use co-location to better
+utilize GPUs even if they do not fully utilize the GPU individually.
+
+\subsection{CUDA}
+CUDA is a set of extensions to C/C++ to enable easier application development
+in GPUs. CUDA also introduces a set of language abstractions that make it
+easier to think about GPU programs. GPU accelerated programs use many threads
+to perform the computation. CUDA groups the threads into \textit{thread
+blocks} and \textit{grid blocks}. A \textit{thread block} is a group of
+threads which are guaranteed to be running on the same SM. A \textit{grid
+block} is a group of thread blocks which contain all the processing necessary
+for the computation of a given \textit{kernel}. A \textit{kernel} is a
+function that runs on a GPU. Both thread blocks and grid blocks can be
+represented using three dimensions. \Cref{fig:threadblock} shows the difference
+between a thread block, grid block, and a thread.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/threadblock}
+    \caption{Grid Block vs Thread Block vs Thread}
+    \label{fig:threadblock}
+\end{figure}
+
+\subsection{Thread Block Scheduling}
+There are various constraints that limit the scheduling of thread blocks into
+the SMs. Amount of the registers, shared memory, and number of threads inside
+a thread block are among the factors that limit the number of blocks that
+can be scheduled into a single SM. Since there is a limited amount of these
+resources available in each SM, the number of thread blocks will be limited
+to the available resources. Apart from that, different GPU architectures 
+have hard limits on the number of thread blocks and threads that can
+be scheduled on a given SM. All these factors lead to a metric called
+\textit{Theoretical Occupancy}\cite{Occupancy} of a kernel. Theoretical
+Occupancy is a metric in percent which determines the percentage of active
+warps in comparison with the total warps that could be scheduled on a given
+GPU. There is another concept called \textit{Achieved Occupancy}. Achieved
+Occupancy measures the scheduled number of warps when the kernel is
+actually running on the GPU. This can be different from the Theoretical
+Occupancy because a given thread in warp might we stalled on a memory load
+and is not yet ready to be scheduled. If there is not enough warps in flight
+ready to be scheduled instead of the stalled thread block, the achieved
+occupancy will be lower than the Theoretical Occupancy. Theoretical Occupancy
+serves as the upper bound for the Achieved Occupancy.
+
+\subsection{Life Cycle of a GPU accelerated Application}
+\Cref{fig:cudalifecycle} shows lifecycle of a typical CUDA application. The
+application starts with allocating memory on the GPU. Then, it will copy
+data from the host memory into the GPU memory. After that, the kernel required
+to run the computation is executed. When the computation is complete, all the
+results are copied back into the host memory. All these operations must be
+executed inside a \textit{CUDA context}. Usually there is one CUDA context
+associated with each process. In the \textit{Exclusive mode}, GPUs give
+exclusive access to a single CUDA context but in the \textit{Default mode}
+work submitted from multiple CUDA contexts to the GPU will be scheduled in a
+time-sharing manner. MPS~\cite{MPS} allows multiple CUDA contexts to run
+applications on the GPU concurrently. This is explained in more details
+in \cref{sec:mps}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/cudalifecycle}
+    \caption{Lifecycle of a GPU accelerated application}
+    \label{fig:cudalifecycle}
+\end{figure}
+
+\subsection{CUDA Streams}
+CUDA Stream is a software construct containing a series of commands that must
+be executed in order. Work from different streams can be executed
+concurrently. Recent GPUs are capable of executing work concurrently from 
+different CUDA streams belonging to the same CUDA context. Without
+MPS~\cite{MPS}, it is not possible to run commands from another CUDA context
+unless the work from the current CUDA context has finished. A common use case
+for CUDA streams is overlapping computation and communication to speedup the
+Kernel execution.
+
+\subsection{Multi-Process Service (MPS)}
+\label{sec:mps}
+MPS~\cite{MPS} is a mechanism that enables packing multiple processes
+together without having to time-share the GPU. MPS achieves this by using a
+client-server architecture. All the processes that want to run on the 
+GPU are submitted to the the MPS server. MPS is useful when an individual
+job is not able to saturate all the GPU resources. Before Volta, MPS
+could not isolate the memory address of different CUDA contexts running
+on the same GPU. After Volta MPS has improved the address space isolation
+along with improved performance through hardware support for MPS.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/contextsscheduling}
+    \caption{Interaction between CUDA contexts and Work Queues on a GPU}
+    \label{fig:context-scheduling}
+\end{figure}
+
+\Cref{fig:context-scheduling} shows how CUDA contexts interact with the GPU
+to schedule work. GPUs have a hardware construct named \textit{Work Queue}.
+Different CUDA contexts 
+
+\section{Machine Learning Frameworks}
+
+Machine Learning frameworks where introduced to enable easier adaption of new
+deep learning techniques and help with democratization of research in this
+area. The mainstream frameworks where specifically designed to help with
+adoption of deep learning on specialized hardwares such GPUs or TPUs. These
+frameworks are usually implemented in C++ for better performance with APIs in
+the languages that the community prefers like Python. Designing a deep
+learning framework is a very challenging task. DL frameworks have to adapt
+very quickly with the latest versions of the accelerators. New accelerators
+are announced around every year. With multiple accelerators in this field
+making sure that you have the best performing algorithm on the new hardware
+is not very easy. Also, there are new models being introduced on a daily
+basis. Making sure that all the state-of-the-art models produce the same
+result on this large spectrum of hardware of software versions is almost an
+impossible task. Because of this, mainstream frameworks are usually a result
+of collaboration between hardware vendors and big software companies.
+
+\subsection{Tensorflow}
+\label{subsec:tensorflow}
+Tensorflow~\cite{Tensorflow} is one of the first mainstream DL frameworks
+open sourced by Google. Tensorflow uses a \textit{computation graph} to
+describe all the computation necessary to achieve a task. When using a
+computation graph the user has to specify all the operations that it needs
+beforehand. After that, they can compile the computation graph and get the
+results. This model allows more optimizations to be performed during the
+compile time. However, this model may limit the users ability to debug the
+values when creating the model since the intermediate values are not
+available. To fix this problem, Tensorflow introduced an eager execution
+mode, that uses an imperative model to make it easier to debug the models.
+This model is usually slower as it doesn't have the ability to have an
+omniscience view of the whole computation to perform the optimizations.
+
+\subsection{PyTorch}
+\label{subsec:pytorch}
+PyTorch~\cite{PyTorch} introduced in 2016 by Facebook with the focus on
+developer productivity. PyTorch uses autograd to automatically store the
+necessary information for calculating the gradient of arbitrary PyTorch code.
+Also, instead of using a computation graph, PyTorch uses an imperative
+programming model that increases the developer productivity. Some research
+frameworks~\cite{Janus} have also taken a hybrid approach to maintain both a
+high developer productivity and optimized and fast execution.
+
+\subsection{MXNet}
+MXNet~\cite{MXNet} was introduced in 2015. MXNet is an Apache project
+supported by many universities and companies. MXNet tries to support both of
+the programming paradigms discussed in
+\cref{subsec:pytorch,subsec:tensorflow}. MXNet also supports a
+\textit{hybrid} approach similar to Janus~\cite{Janus}.

@@ -218,3 +218,129 @@ keywords = {resource allocation and assignment, resource efficiency, cloud compu
   location  = {Houston, Texas, USA},
   series    = {ASPLOS '13}
 }
+
+@misc{A10080gb,
+  author       = {},
+  title        = {NVIDIA Doubles Down: Announces A100 80GB GPU, Supercharging World’s Most Powerful GPU for AI Supercomputing | NVIDIA Newsroom},
+  howpublished = {\url{https://nvidianews.nvidia.com/news/nvidia-doubles-down-announces-a100-80gb-gpu-supercharging-worlds-most-powerful-gpu-for-ai-supercomputing}},
+  month        = {},
+  year         = {},
+  note         = {(Accessed on 11/22/2020)}
+}
+
+@article{Crossbow,
+  author     = {Koliousis, Alexandros and Watcharapichat, Pijika and Weidlich, Matthias and Mai, Luo and Costa, Paolo and Pietzuch, Peter},
+  title      = {Crossbow: Scaling Deep Learning with Small Batch Sizes on Multi-GPU Servers},
+  year       = {2019},
+  issue_date = {July 2019},
+  publisher  = {VLDB Endowment},
+  volume     = {12},
+  number     = {11},
+  issn       = {2150-8097},
+  url        = {https://doi.org/10.14778/3342263.3342276},
+  doi        = {10.14778/3342263.3342276},
+  abstract   = {Deep learning models are trained on servers with many GPUs, and training must scale with the number of GPUs. Systems such as TensorFlow and Caffe2 train models with parallel synchronous stochastic gradient descent: they process a batch of training data at a time, partitioned across GPUs, and average the resulting partial gradients to obtain an updated global model. To fully utilise all GPUs, systems must increase the batch size, which hinders statistical efficiency. Users tune hyper-parameters such as the learning rate to compensate for this, which is complex and model-specific.We describe Crossbow, a new single-server multi-GPU system for training deep learning models that enables users to freely choose their preferred batch size---however small---while scaling to multiple GPUs. Crossbow uses many parallel model replicas and avoids reduced statistical efficiency through a new synchronous training method. We introduce SMA, a synchronous variant of model averaging in which replicas independently explore the solution space with gradient descent, but adjust their search synchronously based on the trajectory of a globally-consistent average model. Crossbow achieves high hardware efficiency with small batch sizes by potentially training multiple model replicas per GPU, automatically tuning the number of replicas to maximise throughput. our experiments show that Crossbow improves the training time of deep learning models on an 8-GPU server by 1.3--4X compared to TensorFlow.},
+  journal    = {Proc. VLDB Endow.},
+  month      = jul,
+  pages      = {1399–1412},
+  numpages   = {14}
+}
+
+@article{DimmWitted,
+  author     = {Zhang, Ce and R\'{e}, Christopher},
+  title      = {DimmWitted: A Study of Main-Memory Statistical Analytics},
+  year       = {2014},
+  issue_date = {August 2014},
+  publisher  = {VLDB Endowment},
+  volume     = {7},
+  number     = {12},
+  issn       = {2150-8097},
+  url        = {https://doi.org/10.14778/2732977.2733001},
+  doi        = {10.14778/2732977.2733001},
+  abstract   = {We perform the first study of the tradeoff space of access methods and replication to support statistical analytics using first-order methods executed in the main memory of a Non-Uniform Memory Access (NUMA) machine. Statistical analytics systems differ from conventional SQL-analytics in the amount and types of memory incoherence that they can tolerate. Our goal is to understand tradeoffs in accessing the data in row- or column-order and at what granularity one should share the model and data for a statistical task. We study this new tradeoff space and discover that there are tradeoffs between hardware and statistical efficiency. We argue that our tradeoff study may provide valuable information for designers of analytics engines: for each system we consider, our prototype engine can run at least one popular task at least 100\texttimes{} faster. We conduct our study across five architectures using popular models, including SVMs, logistic regression, Gibbs sampling, and neural networks.},
+  journal    = {Proc. VLDB Endow.},
+  month      = aug,
+  pages      = {1283–1294},
+  numpages   = {12}
+}
+
+@article{mlfow,
+  title   = {Accelerating the Machine Learning Lifecycle with MLflow.},
+  author  = {Zaharia, Matei and Chen, Andrew and Davidson, Aaron and Ghodsi, Ali and Hong, Sue Ann and Konwinski, Andy and Murching, Siddharth and Nykodym, Tomas and Ogilvie, Paul and Parkhe, Mani and others},
+  journal = {IEEE Data Eng. Bull.},
+  volume  = {41},
+  number  = {4},
+  pages   = {39--45},
+  year    = {2018}
+}
+
+@inproceedings{resnet,
+  title     = {Deep residual learning for image recognition},
+  author    = {He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
+  booktitle = {Proceedings of the IEEE conference on computer vision and pattern recognition},
+  pages     = {770--778},
+  year      = {2016}
+}
+
+@article{vgg,
+  title   = {Very deep convolutional networks for large-scale image recognition},
+  author  = {Simonyan, Karen and Zisserman, Andrew},
+  journal = {arXiv preprint arXiv:1409.1556},
+  year    = {2014}
+}
+
+@inproceedings{senet,
+  title     = {Squeeze-and-excitation networks},
+  author    = {Hu, Jie and Shen, Li and Sun, Gang},
+  booktitle = {Proceedings of the IEEE conference on computer vision and pattern recognition},
+  pages     = {7132--7141},
+  year      = {2018}
+}
+
+@inproceedings{Tensorflow,
+  title     = {Tensorflow: A system for large-scale machine learning},
+  author    = {Abadi, Mart{\'\i}n and Barham, Paul and Chen, Jianmin and Chen, Zhifeng and Davis, Andy and Dean, Jeffrey and Devin, Matthieu and Ghemawat, Sanjay and Irving, Geoffrey and Isard, Michael and others},
+  booktitle = {12th $\{$USENIX$\}$ symposium on operating systems design and implementation ($\{$OSDI$\}$ 16)},
+  pages     = {265--283},
+  year      = {2016}
+}
+
+@inproceedings{PyTorch,
+  author    = {Paszke, Adam and Gross, Sam and Massa, Francisco and Lerer, Adam and Bradbury, James and Chanan, Gregory and Killeen, Trevor and Lin, Zeming and Gimelshein, Natalia and Antiga, Luca and Desmaison, Alban and Kopf, Andreas and Yang, Edward and DeVito, Zachary and Raison, Martin and Tejani, Alykhan and Chilamkurthy, Sasank and Steiner, Benoit and Fang, Lu and Bai, Junjie and Chintala, Soumith},
+  booktitle = {Advances in Neural Information Processing Systems},
+  pages     = {8026--8037},
+  publisher = {Curran Associates, Inc.},
+  title     = {PyTorch: An Imperative Style, High-Performance Deep Learning Library},
+  url       = {https://proceedings.neurips.cc/paper/2019/file/bdbca288fee7f92f2bfa9f7012727740-Paper.pdf},
+  volume    = {32},
+  year      = {2019}
+}
+
+@inproceedings{Janus,
+  author    = {Eunji Jeong and Sungwoo Cho and Gyeong-In Yu and Joo Seong Jeong and Dong-Jin Shin and Byung-Gon Chun},
+  title     = {{JANUS}: Fast and Flexible Deep Learning via Symbolic Graph Execution of Imperative Programs},
+  booktitle = {16th {USENIX} Symposium on Networked Systems Design and Implementation ({NSDI} 19)},
+  year      = {2019},
+  isbn      = {978-1-931971-49-2},
+  address   = {Boston, MA},
+  pages     = {453--468},
+  url       = {https://www.usenix.org/conference/nsdi19/presentation/jeong},
+  publisher = {{USENIX} Association},
+  month     = feb
+}
+
+@article{MXNet,
+  title   = {Mxnet: A flexible and efficient machine learning library for heterogeneous distributed systems},
+  author  = {Chen, Tianqi and Li, Mu and Li, Yutian and Lin, Min and Wang, Naiyan and Wang, Minjie and Xiao, Tianjun and Xu, Bing and Zhang, Chiyuan and Zhang, Zheng},
+  journal = {arXiv preprint arXiv:1512.01274},
+  year    = {2015}
+}
+
+@misc{NsightCompute,
+  author       = {},
+  title        = {NVIDIA Nsight Compute | NVIDIA Developer},
+  howpublished = {\url{https://developer.nvidia.com/nsight-compute}},
+  month        = {},
+  year         = {},
+  note         = {(Accessed on 11/29/2020)}
+}

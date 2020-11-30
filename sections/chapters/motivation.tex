@@ -1,226 +1,56 @@
-\chapter{Motivation and Related Work}
+\chapter{Motivation}
 \label{chap:motivation}
 
-\section{GPUs}
+In this chapter we will discuss the unique characteristics of deep learning
+jobs that make them suitable for co-location. We will discuss why deep learning
+job are not usually able to saturate GPU resources in today's data centers.
 
-GPUs were among the first accelerators to be introduced alongside with CPUs.
-GPUs are throughput optimized in contrast to the CPUs which are latency
-optimized. They consist of many cheap cores that can perform large number of
-operations in parallel. They also have a large memory bandwidth that helps
-them bring data into these cores in efficiently.
+\section{Deep Learning Job Characteristics}
+\subsection{Heterogeneity of GPU Clusters}
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.4\textwidth]{figs/gpu}
-    \caption{GPU Architecture}
-    \label{fig:gpu-architecture}
-\end{figure}
-\Cref{fig:gpu-architecture} shows a simple illustration of the GPU
-architecture. GPUs consist of several \textit{Streaming Multiprocessors
-(SMs)}. SMs are the processing units in GPUs. Each of the SMs contains
-various cores designed for operations on different data types. For example,
-V100 GPU contains 84 SMs where each of them has 64 FP32 cores, 64 INT32
-cores, 32 FP64 cores, and 8 tensor cores\cite{Volta}. In
-\cref{fig:gpu-architecture}, \textit{CC} refers to the CUDA cores which
-consists of all the cores present in each SM except the tensor cores. Tensor
-Cores are abbreviated using \textit{TC}. They provide accelerated performance
-for the reduced precision operations which are present in the Deep Learning
-workloads. They were introduced in the Volta\cite{Volta} microarchitecture in
-2017.
+\label{sec:hetrogenity}
+GPU data centers are becoming more diverse with the introduction of new GPUs
+every year. The GPUs that are available in the data centers have many
+different capabilities. Some GPUs may have a couple of gigabytes of memory
+while others may have tens of gigabytes of memory. At the time of writing
+this thesis, A100 GPUs can support 80GBs~\cite{A10080gb} of memory. The
+amount of memory available on a GPU affects the batch size that the developer
+can choose. Larger batch sizes usually increase the utilization of a GPU. It
+may seem like an obvious choice to divide the GPU memory by batch size to
+fully utilize the GPU. However, not all the GPUs available in the cluster are
+A100 gpus with 80 GBs of memory. In fact, these newer GPUs are more scarce
+than the older GPUs due to the high demand and better performance.
+Users usually end up selecting a larger spectrum of GPUs in order to reduce
+the queuing time for their job to be scheduled. Since users cannot determine
+the effective batch size for their job when they are submitting the job to
+the cluster, they will end-up under utilizing the GPU and choosing smaller
+batch size.
+[Put a figure about increasing batch size and training speed]
 
-\subsection{GPU Memory and Compute Capabilities}
+\subsection{Statistical Constraints}
+Training a deep neural network involves launching many similar jobs with a
+single parameter change in order to find the best set of hyperparameters that
+achieves the best performance. One may argue that the batch size problem
+discussed in \cref{sec:hetrogenity} can be solved by querying the amount of
+GPU memory available by size of memory required for a single batch of data at
+the time the job is being scheduled. Since many different training jobs are
+launched simultaneously, the hyperparameters found for one batch size, may be
+different from the hyperparamters for the other job. Because of this, batch
+size for all the jobs that training the same model should be the same.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/gpus-overtime.pdf}
-    \caption{GPU Capabilities over time}
-    \label{fig:gpu-overtime}
-\end{figure}
+Another issue is that some machine learning tasks are not able to use large
+batch sizes, and large batch sizes come with diminished returns~\cite{Crossbow,DimmWitted}.
+This constraint further leaves the GPUs underutilized.
 
-GPUs memory bandwidth and compute capabilities have increased by a tremendous
-amount over time. \Cref{fig:gpu-overtime} shows this trend in the Tesla GPU
-class. Tesla GPUs are NVIDIA's data center GPU class. The most recent data
-center GPU class as of writing this thesis is the A100 GPU with the ability
-to perform 312 TFLOPS half-precision operations. These increases in the compute
-and memory capabilities have made it harder for application developers to fully
-saturate the GPU resources. In this thesis, we use co-location to better
-utilize GPUs even if they do not fully utilize the GPU individually.
-
-\subsection{CUDA}
-
-CUDA is a set of extensions to C/C++ to enable easier application development
-in GPUs. CUDA also introduces a set of language abstractions that make it
-easier to think about GPU programs. GPU accelerated programs use many threads
-to perform the computation. CUDA groups the threads into \textit{thread
-blocks} and \textit{grid blocks}. A \textit{thread block} is a group of
-threads which are guaranteed to be running on the same SM. A \textit{grid
-block} is a group of thread blocks which contain all the processing necessary
-for the computation of a given \textit{kernel}. A \textit{kernel} is a
-function that runs on a GPU. Both thread blocks and grid blocks can be
-represented using three dimensions. \Cref{fig:threadblock} shows the difference
-between a thread block, grid block, and a thread.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/threadblock}
-    \caption{Grid Block vs Thread Block vs Thread}
-    \label{fig:threadblock}
-\end{figure}
-
-\subsection{Thread Block Scheduling}
-There are various constraints that limit the scheduling of thread blocks into
-the SMs. Amount of the registers, shared memory, and number of threads inside
-a thread block are among the factors that limit the number of blocks that
-can be scheduled into a single SM. Since there is a limited amount of these
-resources available in each SM, the number of thread blocks will be limited
-to the available resources. Apart from that, different GPU architectures 
-have hard limits on the number of thread blocks and threads that can
-be scheduled on a given SM. All these factors lead to a metric called
-\textit{Theoretical Occupancy}\cite{Occupancy} of a kernel. Theoretical
-Occupancy is a metric in percent which determines the percentage of active
-warps in comparison with the total warps that could be scheduled on a given
-GPU. There is another concept called \textit{Achieved Occupancy}. Achieved
-Occupancy measures the scheduled number of warps when the kernel is
-actually running on the GPU. This can be different from the Theoretical
-Occupancy because a given thread in warp might we stalled on a memory load
-and is not yet ready to be scheduled. If there is not enough warps in flight
-ready to be scheduled instead of the stalled thread block, the achieved
-occupancy will be lower than the Theoretical Occupancy. Theoretical Occupancy
-serves as the upper bound for the Achieved Occupancy.
-
-\subsection{Life Cycle of a GPU accelerated Application}
-\Cref{fig:cudalifecycle} shows lifecycle of a typical CUDA application. The
-application starts with allocating memory on the GPU. Then, it will copy
-data from the host memory into the GPU memory. After that, the kernel required
-to run the computation is executed. When the computation is complete, all the
-results are copied back into the host memory. All these operations must be
-executed inside a \textit{CUDA context}. Usually there is one CUDA context
-associated with each process. In the \textit{Exclusive mode}, GPUs give
-exclusive access to a single CUDA context but in the \textit{Default mode}
-work submitted from multiple CUDA contexts to the GPU will be scheduled in a
-time-sharing manner. MPS~\cite{MPS} allows multiple CUDA contexts to run
-applications on the GPU concurrently. This is explained in more details
-in \cref{sec:mps}.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/cudalifecycle}
-    \caption{Lifecycle of a GPU accelerated application}
-    \label{fig:cudalifecycle}
-\end{figure}
-
-\subsection{CUDA Streams}
-CUDA Stream is a software construct containing a series of commands that must
-be executed in order. Work from different streams can be executed
-concurrently. Recent GPUs are capable of executing work concurrently from 
-different CUDA streams belonging to the same CUDA context. Without
-MPS~\cite{MPS}, it is not possible to run commands from another CUDA context
-unless the work from the current CUDA context has finished. A common use case
-for CUDA streams is overlapping computation and communication to speedup the
-Kernel execution.
-
-\subsection{Multi-Process Service (MPS)}
-\label{sec:mps}
-MPS~\cite{MPS} is a mechanism that enables packing multiple processes
-together without having to time-share the GPU. MPS achieves this by using a
-client-server architecture. All the processes that want to run on the 
-GPU are submitted to the the MPS server. MPS is useful when an individual
-job is not able to saturate all the GPU resources. Before Volta, MPS
-could not isolate the memory address of different CUDA contexts running
-on the same GPU. After Volta MPS has improved the address space isolation
-along with improved performance through hardware support for MPS.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/contextsscheduling}
-    \caption{Interaction between CUDA contexts and Work Queues on a GPU}
-    \label{fig:context-scheduling}
-\end{figure}
-
-\Cref{fig:context-scheduling} shows how CUDA contexts interact with the GPU
-to schedule work. GPUs have a hardware construct named \textit{Work Queue}.
-Different CUDA contexts 
-
-
-\section{Related Work}
-
-In the area of GPU schedulers for deep learning workloads there are various
-related works to the work presented in this thesis. Optimus~\cite{Optimus} is
-one of the earlier works in this area. The main goal of this work is which
-job should be given more workers so that the total job completion time for a
-set of jobs is minimized. It is assumed that the jobs use the Parameter
-Server~\cite{ParameterServer} architecture. They learn the convergence curve
-for a given job to predict the number of required iterations until the
-completion. Using this information, they can measure how long the job is
-going to last. Then, they create a heuristic algorithm that increases the
-number of workers or parameter servers for a job that gains more speed up
-compared to the other jobs. This work is complementary to our work. We can
-augment their techniques with our co-location algorithms to better utilize
-the GPUs.
-
-Tiresias~\cite{Tiresias} presented a more realistic scheduling algorithm.
-Tiresias is able to use the historical data of the jobs to minimize the job
-completion time. They do not adaptively change the number of workers for a 
-given job. This is a more realistic approach since increasing the number
-of workers affects the accuracy and may require retuning all the
-hyperparameters. They do not consider the packing of multiple jobs on the
-same GPU.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/nnmemory}
-    \caption{Memory Allocation in Forward and Backward Pass}
-    \label{fig:memory-allocation-frameworks}
-\end{figure}
-
-\begin{equation}
-    w(t+1) = w(t) - \eta * \nabla Q(w(t))
-    \label{eq:sgd}
-\end{equation}
-
-Gandiva~\cite{Gandiva} introduced a fast context switch mechanism to avoid
-starvation of the jobs in deep learning clusters. They observed that the GPU
-memory usage of a job is not constant during the training and is minimum
-between the iterations. While this is not true for PyTorch and Tensorflow
-frameworks, some frameworks like MXNet deallocate the memory when it is no
-longer needed. \Cref{fig:memory-allocation-frameworks} shows how memory
-allocation is performed during the training. In this figure, we are assuming
-the training of a convolutional neural network~\cite{CNN}. The weights
-associated with each layer is always present in the GPU. As the input
-traverses different layers of the neural network, it creates
-\textit{activations}. Activations must be stored for each layer. The
-activations are required for calculating the gradients in \cref{eq:sgd}.
-These gradients will be calculated during the backward pass. In the backward
-pass, the activation values can be discarded and as a consequence the memory
-allocated for each of the layers may be freed. Gandiva leverages this pattern,
-and does not interrupt the job during the forward or backward passes to reduce
-the amount of data that needs to be copied during the checkpointing process.
-Gandiva also included a mechanism for "packing" the jobs to reduce the queuing
-time and improve JCT. They employed random packing to find the matching job
-pairs. As mentioned in~\cite{Gavel}, this strategy is not sufficient for finding
-beneficial co-locations.
-
-Chic~\cite{Chic} introduced the idea of adaptively changing the number of workers
-using a reinforcement learning algorithm. They showed that using reinforcement
-learning will lead to better results compared to Optimus~\cite{Optimus}. However,
-they still didn't consider the packing of multiple jobs into a single GPU.
-
-Gavel~\cite{Gavel} was the first scheduler to design an scheduling mechanism
-that can use many different scheduling objectives. Gavel has support for
-hierarchical and multi-domain scheduling policies. Their modeling of the
-scheduling problem is able to take into account packing of multiple jobs
-into a single GPU if the appropriate profiling information is available.
-They also include a throughput estimator that is able to estimate the 
-co-location throughput of unseen jobs.
-
-Although interference of co-located jobs in GPU clusters has not been very
-explored, there is a significant body of work on the interference effect of
-co-located jobs in CPU clusters. Quasar~\cite{Quasar} employs
-PQ-reconstruction with Stochastic Gradient Descent, to fill the unspecified
-elements of a matrix. In this matrix, the rows are jobs and the columns are
-different platforms. Quasar first profiles a couple of jobs extensively on a
-number of platforms. For unseen jobs, it profiles the job on a limited set of
-platforms and then uses the PQ-reconstruction to predict the performance on
-unseen platforms. Gavel~\cite{Gavel} used this technique in the "Throughput
-Estimator" to predict the performance of co-location. They treated the
-co-located jobs as a new job and tried to fill in the matrix appropriately.
+\subsection{Monitoring, Logging, and Data Loading}
+Training a neural network does not only involve GPU computation. A common
+training task involves loading the data from the disk to the RAM, logging
+metrics such as accuracy to monitor the progress of training~\cite{mlfow},
+and check pointing the trained model so that the progress is not lost in case
+of job preemption or power shutdown. Job preemption is implemented every hour
+in some academic clusters such as Vector Institute. Preemption helps
+avoiding starvation by giving everyone a fair share of the cluster. These
+tasks lead to leaving the GPU unutilized for many cycles. Using co-location,
+one job can use the GPU while the other job is busy monitoring metrics or
+check pointing.
+[Put a figure about PyTorch hello world CPU task]
