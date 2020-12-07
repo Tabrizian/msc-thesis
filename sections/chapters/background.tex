@@ -1,7 +1,11 @@
 \chapter{Background}
 \label{chap:background}
 
-\section{GPUs}
+In this chapter we will discuss some background information related to this
+work. We will discuss the basics of general programming on GPUs and how
+scheduling multiple processes work on GPUs.
+
+\section{Graphical Processing Units (GPUs)}
 
 GPUs were among the first accelerators to be introduced alongside with CPUs.
 GPUs are throughput optimized in contrast to the CPUs which are latency
@@ -28,25 +32,23 @@ for the reduced precision operations which are present in the Deep Learning
 workloads. They were introduced in the Volta\cite{Volta} microarchitecture in
 2017.
 
-\subsection{GPU Memory and Compute Capabilities}
+\subsection{Memory Hierarchy}
+As shown in \cref{fig:gpu-architecture}, GPUs have a memory hierarchy
+similar to the CPUs. The main difference is including a shared memory
+that can be explicitly managed by the users program.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/gpus-overtime.pdf}
-    \caption{GPU Capabilities over time}
-    \label{fig:gpu-overtime}
-\end{figure}
+\begin{itemize}
+    \item \textbf{Registers}: registers are allocated to each individual thread.
+    \item \textbf{L1 Cache}: L1 cache is shared among all the thread blocks in a SM.
+    \item \textbf{Shared Memory}: Shared memory is similar to L1 cache except that it is explicitly managed by the user.
+    \item \textbf{L2 Cache}: L2 cache is a large cached memory that is shared among all the SMs.
+    \item \textbf{Global DRAM Memory}: It is the slowest memory access
+    compared to all the other memory levels described above. This memory is very large. Usually all
+    the data required for a computation is stored in this memory.
+\end{itemize}
 
-GPUs memory bandwidth and compute capabilities have increased by a tremendous
-amount over time. \Cref{fig:gpu-overtime} shows this trend in the Tesla GPU
-class. Tesla GPUs are NVIDIA's data center GPU class. The most recent data
-center GPU class as of writing this thesis is the A100 GPU with the ability
-to perform 312 TFLOPS half-precision operations. These increases in the compute
-and memory capabilities have made it harder for application developers to fully
-saturate the GPU resources. In this thesis, we use co-location to better
-utilize GPUs even if they do not fully utilize the GPU individually.
-
-\subsection{CUDA}
+\subsection{Programming Model}
+\subsubsection{CUDA}
 CUDA is a set of extensions to C/C++ to enable easier application development
 in GPUs. CUDA also introduces a set of language abstractions that make it
 easier to think about GPU programs. GPU accelerated programs use many threads
@@ -66,7 +68,7 @@ between a thread block, grid block, and a thread.
     \label{fig:threadblock}
 \end{figure}
 
-\subsection{Thread Block Scheduling}
+\subsubsection{Thread Block Scheduling}
 There are various constraints that limit the scheduling of thread blocks into
 the SMs. Amount of the registers, shared memory, and number of threads inside
 a thread block are among the factors that limit the number of blocks that
@@ -87,7 +89,14 @@ ready to be scheduled instead of the stalled thread block, the achieved
 occupancy will be lower than the Theoretical Occupancy. Theoretical Occupancy
 serves as the upper bound for the Achieved Occupancy.
 
-\subsection{Life Cycle of a GPU accelerated Application}
+\subsubsection{Life Cycle of a GPU accelerated Application}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/cudalifecycle}
+    \caption{Lifecycle of a GPU accelerated application}
+    \label{fig:cudalifecycle}
+\end{figure}
+
 \Cref{fig:cudalifecycle} shows lifecycle of a typical CUDA application. The
 application starts with allocating memory on the GPU. Then, it will copy
 data from the host memory into the GPU memory. After that, the kernel required
@@ -101,14 +110,8 @@ time-sharing manner. MPS~\cite{MPS} allows multiple CUDA contexts to run
 applications on the GPU concurrently. This is explained in more details
 in \cref{sec:mps}.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/cudalifecycle}
-    \caption{Lifecycle of a GPU accelerated application}
-    \label{fig:cudalifecycle}
-\end{figure}
-
-\subsection{CUDA Streams}
+\subsection{Concurrent Execution of Tasks on a GPU}
+\subsubsection{CUDA Streams}
 CUDA Stream is a software construct containing a series of commands that must
 be executed in order. Work from different streams can be executed
 concurrently. Recent GPUs are capable of executing work concurrently from 
@@ -118,8 +121,15 @@ unless the work from the current CUDA context has finished. A common use case
 for CUDA streams is overlapping computation and communication to speedup the
 Kernel execution.
 
-\subsection{Multi-Process Service (MPS)}
+\subsubsection{Multi-Process Service (MPS)}
 \label{sec:mps}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/contextsscheduling}
+    \caption{Interaction between CUDA contexts and Work Queues on a GPU}
+    \label{fig:context-scheduling}
+\end{figure}
+
 MPS~\cite{MPS} is a mechanism that enables packing multiple processes
 together without having to time-share the GPU. MPS achieves this by using a
 client-server architecture. All the processes that want to run on the 
@@ -129,22 +139,79 @@ could not isolate the memory address of different CUDA contexts running
 on the same GPU. After Volta MPS has improved the address space isolation
 along with improved performance through hardware support for MPS.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.9\textwidth]{figs/contextsscheduling}
-    \caption{Interaction between CUDA contexts and Work Queues on a GPU}
-    \label{fig:context-scheduling}
-\end{figure}
-
 \Cref{fig:context-scheduling} shows how CUDA contexts interact with the GPU
 to schedule work. GPUs have a hardware construct named \textit{Work Queue}.
-Different CUDA contexts 
+Different CUDA contexts cannot have their work be executed simultaneously
+on the GPU. The GPU is time-shared between tasks coming from different
+CUDA contexts.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/mps}
+    \caption{Interaction between CUDA contexts and Work Queues on a GPU}
+    \label{fig:mps}
+\end{figure}
+
+\Cref{fig:mps} shows how CUDA contexts interact with the GPU when the MPS
+server is running on the GPU. MPS server acts as a middle-man that intercepts
+all the work that is being submitted to the GPU. MPS Server will then submit
+the work on behalf of the application to the GPU. The GPU now will schedule
+all the work from both of the CUDA contexts increasing the GPU utilization.
+
+\section{Deep Learning}
+Deep learning~\cite{deeplearning} is a machine learning paradigm that focuses
+on training of artificial neural networks with many layers. Artificial Neural
+Networks (ANNs) are function approximators that are proven to be
+universal~\cite{universal}. It means that they can approximate any measurable
+function to any desired degree of accuracy. This feature combined with the
+advances in hardware enabled end-to-end learning algorithms that are able
+to generalize well in different domains of Natural Language Processing~\cite{gpt},
+Computer Vision~\cite{alexnet}, and Speech Recognition.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.3\textwidth]{figs/feedforwardnn}
+    \caption{A Fully Connected Feed Forward Neural Network}
+    \label{fig:feedforwardnn}
+\end{figure}
+
+\Cref{fig:feedforwardnn} shows a simple illustration of a four-layer neural
+network. In this figure, there are four layers in total. The first layer
+contains the input data and the last layer is called the output layer. The
+intermediate layers in this network is called the hidden layers. Each of the
+nodes in these layers is called a neuron. Each neuron in every layer needs to
+use a function for activation. The ultimate goal of a neural network is to
+learn a set of weights that performs best on the test data set. The process
+of learning the optimal weights is referred to as \textit{Training}. The
+neural network starts with random weights. During each iteration of the
+training a sample from the training data set is passed in the forward
+direction known as \textit{forward pass}. In the output layer, neural network
+compares the calculated output with the expected output and calculates the
+difference between them using a metric known as \textit{loss}. Loss is a
+scalar value, which will be propagated backward into the network and the
+weights are updated for each layer. The updates for each layer is calculated
+by computing the partial derivatives with respect to the previous layer.
+These updates along with a learning rate and an optimization algorithm will
+determine the weights for the next iteration.
+
+\subsection{GPUs and Deep Learning}
+GPUs were originally designed for graphic processing. Because of the enormous
+amount of vector computations that were required for graphics, GPUs were
+invented. Deep learning also involves a variety of different operations. The
+main operation is matrix by matrix multiplication which specifically GPUs are
+very good at. Matrix by matrix multiplication is a compute-bound operation
+which makes it the best fit for GPUs. Indeed, the peak compute performance of
+GPUs is calculated by measuring the matrix multiplication. Although deep
+learning techniques were introduced many decades ago, their feasibility
+remained questioned until recent years. The hardware advances enabled these
+computationally expensive workloads affordable and feasible in a timely
+manner.
 
 \section{Machine Learning Frameworks}
 
 Machine Learning frameworks where introduced to enable easier adaption of new
 deep learning techniques and help with democratization of research in this
-area. The mainstream frameworks where specifically designed to help with
+area. The mainstream frameworks are specifically designed to help with
 adoption of deep learning on specialized hardwares such GPUs or TPUs. These
 frameworks are usually implemented in C++ for better performance with APIs in
 the languages that the community prefers like Python. Designing a deep
@@ -189,3 +256,10 @@ supported by many universities and companies. MXNet tries to support both of
 the programming paradigms discussed in
 \cref{subsec:pytorch,subsec:tensorflow}. MXNet also supports a
 \textit{hybrid} approach similar to Janus~\cite{Janus}.
+
+\section{Summary}
+We provided an overview of the GPU computation and basics of running
+CUDA accelerated applications on GPUs. We also discussed how running
+multiple tasks on the same GPU work. Additionally, we discussed
+some of the mainstream ML frameworks and what are some of the
+programming paradigms in these frameworks.

@@ -35,7 +35,7 @@ discussed in \cref{sec:hetrogenity} can be solved by querying the amount of
 GPU memory available by size of memory required for a single batch of data at
 the time the job is being scheduled. Since many different training jobs are
 launched simultaneously, the hyperparameters found for one batch size, may be
-different from the hyperparamters for the other job. Because of this, batch
+different from the hyperparameters for the other job. Because of this, batch
 size for all the jobs that training the same model should be the same.
 
 Another issue is that some machine learning tasks are not able to use large
@@ -54,3 +54,31 @@ tasks lead to leaving the GPU unutilized for many cycles. Using co-location,
 one job can use the GPU while the other job is busy monitoring metrics or
 check pointing.
 [Put a figure about PyTorch hello world CPU task]
+
+\section{GPU Memory and Compute Capabilities}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/gpus-overtime.pdf}
+    \caption{GPU Capabilities over time}
+    \label{fig:gpu-overtime}
+\end{figure}
+
+GPUs memory bandwidth and compute capabilities have increased by a tremendous
+amount over time. \Cref{fig:gpu-overtime} shows this trend in the Tesla GPU
+class. Tesla GPUs are NVIDIA's data center GPU class. The most recent data
+center GPU class as of writing this thesis is the A100 GPU with the ability
+to perform 312 TFLOPS half-precision operations. These increases in the compute
+and memory capabilities have made it harder for application developers to fully
+saturate the GPU resources. In this thesis, we use co-location to better
+utilize GPUs even if they do not fully utilize the GPU individually.
+
+\section{Summary}
+In this chapter we discussed why co-location of jobs can be beneficial when
+designing schedulers for deep learning jobs. We talked about the unique
+characteristics of deep learning jobs and why they may not be able to fully
+utilize the resources in the cluster. These factors include the statistical
+constraints of the jobs, monitoring, logging or other CPU based tasks, and
+heterogeneity of GPU clusters. In the next chapter, we provide detailed
+profiling results to quantify the amount of speed up that can be gained
+using co-location.

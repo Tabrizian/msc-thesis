@@ -1,2 +1,53 @@
 \chapter{Conclusion and Future Work}
 \label{chap:future}
+
+In this thesis we presented a detailed study on the performance impact of
+co-location of different deep learning models on a single GPU. We showed how
+simple metrics like weighted memory bandwidth utilization and weighted
+occupancy can accurately predict the speedup. The key takeaways from this
+thesis are the following:
+
+\begin{itemize}
+    \item Due to various reasons, individual jobs may not be able to fully
+    utilize all the resources on a single GPU. Especially as the GPUs
+    keep evolving, it becomes more difficult for the designers of the
+    frameworks to optimize all the previous models in the new architecture.
+    Co-location is a simple, yet effective, technique that allows the
+    designers of cluster schedulers to improve the utilization of GPUs
+    and reduce the queuing time.
+
+    \item We modeled the speedup in case of co-location. Our modeling is able
+    to generalize to co-location of more than two jobs and does not depend on
+    the batch size of the models.
+
+    \item We provided in depth profiling of the models on a V100 GPU. We showed
+    that by profiling the individual models, we can predict whether the jobs
+    will gain a speedup when packed together or not.
+
+    \item Our method of co-location is independent of the deep learning
+    framework and does not require any modification to the users' code.
+\end{itemize}
+
+\section{Future Work}
+
+This work is one of the first works that studies the implications of using
+Volta MPS in deep learning jobs. Using the metrics and tools provided in this
+thesis, GPU cluster schedulers can be built that better predict which jobs
+will benefit from the packing and which jobs won't.
+
+In this work we let the DL frameworks decide on how the kernels are
+dispatched. As shown in \cref{fig:memory-util-histo,fig:occupancy-histo},
+individual kernels can have different memory bandwidths and occupancies.
+Designing a kernel context manager that can decide which kernels execution
+can be overlapped with each other while other kernels will perform better
+when they run individually. This will further improve the performance of
+co-location by only allowing the execution of compatible kernels.
+
+Evaluation of proposed approaches on GPUs other than V100 would be also
+useful. In this work we only had access to a single V100 gpu and thus we
+could not verify whether these results hold for other Volta and Ampere GPU
+architectures too or not. Also, MPS has not yet been released for the recent
+Ampere~\cite{Ampere} architecture. If the same results hold for other GPU
+architectures too, a one-time creation of the performance model would
+be sufficient to guide the scheduling decisions for all different
+GPU architectures.

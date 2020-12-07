@@ -30,12 +30,24 @@ will decrease the training speed for these jobs. Additionally, we study the pote
 reasons behind the incompatibility of the workloads and how they can be used to predict
 the incompatible jobs.
 
-The next chapter gives an overview of the scheduling algorithms in other
-domains and an introduction on how GPUs are used for general processing.
+\Cref{chap:background} provides a background on how GPUs work and how they
+can be programmed. It also discusses various models that multiple tasks
+can be executed at the same time on the GPU.
+
 \Cref{chap:motivation} discusses the motivation for co-location of the DL
-jobs. \Cref{chap:design} discusses the design of our proposed scheduler that
-employs co-location to improve the job completion time (JCT).
-\Cref{chap:evaluation} provides the experimental results for this design and
-how it compares to the schedulers that do not employ co-location. Finally,
-\Cref{chap:future} concludes the thesis and provides future directions on how
-this work can be extended.
+jobs.
+
+\Cref{chap:profiling-training} provides in-depth profiling information. This
+profiling information help understand why co-location improves the
+performance in some cases while in other cases it may hinder the performance.
+In this chapter we study the co-location of training jobs.
+
+\Cref{chap:profiling-inference} studies the co-location effect of inference
+jobs. In this chapter we study the applicability of the performance models
+created for co-location of training jobs for inference jobs.
+
+\Cref{chap:related} provides a survey of the related work in this area and
+how this work is different from them.
+
+\Cref{chap:future} concludes the paper and discusses the potential future
+research directions that can be built on this work.
