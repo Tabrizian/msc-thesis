@@ -72,11 +72,12 @@
 %% single, one-and-a-half, or double spaced (see the `setspace' package
 %% for details).
 \usepackage{url}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{cleveref}
 \usepackage{graphicx}
 \usepackage{caption}
+\usepackage{minted}
 \usepackage{subcaption}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%                                                                    %%
 %%                   ***   I M P O R T A N T   ***                    %%
@@ -161,10 +162,10 @@
 
 %% This generates an "acknowledgements" section, if needed
 %% (uncomment to have it appear in the document).
-%\begin{acknowledgements}
+\begin{acknowledgements}
 %% *** Put your Acknowledgements here. ***
     \input{sections/ack.tex}
-%\end{acknowledgements}
+\end{acknowledgements}
 
 %% This generates the Table of Contents (on a separate page).
 \tableofcontents
@@ -199,8 +200,8 @@
 \include{sections/chapters/background}
 \include{sections/chapters/motivation}
 \include{sections/chapters/profiling-training}
-\include{sections/chapters/profiling-inference}
-\include{sections/chapters/related-work}
+\include{sections/chapters/scheduler}
+\include{sections/chapters/evaluation}
 \include{sections/chapters/future}
 
 %% This adds a line for the Bibliography in the Table of Contents.

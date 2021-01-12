@@ -419,3 +419,172 @@ keywords = {resource allocation and assignment, resource efficiency, cloud compu
   year         = {},
   note         = {(Accessed on 12/06/2020)}
 }
+
+@article{Kubernetes,
+  title     = {Borg, omega, and kubernetes},
+  author    = {Burns, Brendan and Grant, Brian and Oppenheimer, David and Brewer, Eric and Wilkes, John},
+  journal   = {Queue},
+  volume    = {14},
+  number    = {1},
+  pages     = {70--93},
+  year      = {2016},
+  publisher = {ACM New York, NY, USA}
+}
+
+@misc{Redis,
+  author       = {},
+  title        = {Redis},
+  howpublished = {\url{https://redis.io/}},
+  month        = {},
+  year         = {},
+  note         = {(Accessed on 12/19/2020)}
+}
+
+@misc{Flask,
+  author       = {},
+  title        = {Welcome to Flask — Flask Documentation (1.1.x)},
+  howpublished = {\url{https://flask.palletsprojects.com/en/1.1.x/}},
+  month        = {},
+  year         = {},
+  note         = {(Accessed on 12/20/2020)}
+}
+
+@article{scikit-learn,
+ title={Scikit-learn: Machine Learning in {P}ython},
+ author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
+         and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
+         and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and
+         Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.},
+ journal={Journal of Machine Learning Research},
+ volume={12},
+ pages={2825--2830},
+ year={2011}
+}
+
+@article{CIFAR10,
+  title={Learning multiple layers of features from tiny images},
+  author={Krizhevsky, Alex and Hinton, Geoffrey and others},
+  year={2009},
+  publisher={Citeseer}
+}
+
+@inproceedings{Hypersched,
+  title={Hypersched: Dynamic resource reallocation for model development on a deadline},
+  author={Liaw, Richard and Bhardwaj, Romil and Dunlap, Lisa and Zou, Yitian and Gonzalez, Joseph E and Stoica, Ion and Tumanov, Alexey},
+  booktitle={Proceedings of the ACM Symposium on Cloud Computing},
+  pages={61--73},
+  year={2019}
+}
+
+@article{ASHA,
+  title={Massively parallel hyperparameter tuning},
+  author={Li, Liam and Jamieson, Kevin and Rostamizadeh, Afshin and Gonina, Ekaterina and Hardt, Moritz and Recht, Benjamin and Talwalkar, Ameet},
+  journal={arXiv preprint arXiv:1810.05934},
+  year={2018}
+}
+
+@inproceedings{HSM,
+  author    = {Zhao, Xia and Jahre, Magnus and Eeckhout, Lieven},
+  title     = {HSM: A Hybrid Slowdown Model for Multitasking GPUs},
+  year      = {2020},
+  isbn      = {9781450371025},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3373376.3378457},
+  doi       = {10.1145/3373376.3378457},
+  abstract  = {Graphics Processing Units (GPUs) are increasingly widely used in the cloud to accelerate compute-heavy tasks. However, GPU-compute applications stress the GPU architecture in different ways --- leading to suboptimal resource utilization when a single GPU is used to run a single application. One solution is to use the GPU in a multitasking fashion to improve utilization. Unfortunately, multitasking leads to destructive interference between co-running applications which causes fairness issues and Quality-of-Service (QoS) violations.We propose the Hybrid Slowdown Model (HSM) to dynamically and accurately predict application slowdown due to interference. HSM overcomes the low accuracy of prior white-box models, and training and implementation overheads of pure black-box models, with a hybrid approach. More specifically, the white-box component of HSM builds upon the fundamental insight that effective bandwidth utilization is proportional to DRAM row buffer hit rate, and the black-box component of HSM uses linear regression to relate row buffer hit rate to performance. HSM accurately predicts application slowdown with an average error of 6.8%, a significant improvement over the current state-of-the-art. In addition, we use HSM to guide various resource management schemes in multitasking GPUs: HSM-Fair significantly improves fairness (by 1.59x on average) compared to even partitioning, whereas HSM-QoS improves system throughput (by 18.9% on average) compared to proportional SM partitioning while maintaining the QoS target for the high-priority application in challenging mixed memory/compute-bound multi-program workloads.},
+  booktitle = {Proceedings of the Twenty-Fifth International Conference on Architectural Support for Programming Languages and Operating Systems},
+  pages     = {1371–1385},
+  numpages  = {15},
+  keywords  = {gpu, multitasking, performance modeling, slowdown prediction},
+  location  = {Lausanne, Switzerland},
+  series    = {ASPLOS '20}
+}
+
+@inproceedings{GPUSIM,
+  author    = {M. {Khairy} and Z. {Shen} and T. M. {Aamodt} and T. G. {Rogers}},
+  booktitle = {2020 ACM/IEEE 47th Annual International Symposium on Computer Architecture (ISCA)},
+  title     = {Accel-Sim: An Extensible Simulation Framework for Validated GPU Modeling},
+  year      = {2020},
+  volume    = {},
+  number    = {},
+  pages     = {473-486},
+  doi       = {10.1109/ISCA45697.2020.00047}
+}
+
+@inproceedings{CUDAStream,
+  title        = {Performance modeling in CUDA streams—A means for high-throughput data processing},
+  author       = {Li, Hao and Yu, Di and Kumar, Anand and Tu, Yi-Cheng},
+  booktitle    = {2014 IEEE International Conference on Big Data (Big Data)},
+  pages        = {301--310},
+  year         = {2014},
+  organization = {IEEE}
+}
+
+@inproceedings{DelayScheduling,
+  author    = {Zaharia, Matei and Borthakur, Dhruba and Sen Sarma, Joydeep and Elmeleegy, Khaled and Shenker, Scott and Stoica, Ion},
+  title     = {Delay Scheduling: A Simple Technique for Achieving Locality and Fairness in Cluster Scheduling},
+  year      = {2010},
+  isbn      = {9781605585772},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/1755913.1755940},
+  doi       = {10.1145/1755913.1755940},
+  abstract  = {As organizations start to use data-intensive cluster computing systems like Hadoop and Dryad for more applications, there is a growing need to share clusters between users. However, there is a conflict between fairness in scheduling and data locality (placing tasks on nodes that contain their input data). We illustrate this problem through our experience designing a fair scheduler for a 600-node Hadoop cluster at Facebook. To address the conflict between locality and fairness, we propose a simple algorithm called delay scheduling: when the job that should be scheduled next according to fairness cannot launch a local task, it waits for a small amount of time, letting other jobs launch tasks instead. We find that delay scheduling achieves nearly optimal data locality in a variety of workloads and can increase throughput by up to 2x while preserving fairness. In addition, the simplicity of delay scheduling makes it applicable under a wide variety of scheduling policies beyond fair sharing.},
+  booktitle = {Proceedings of the 5th European Conference on Computer Systems},
+  pages     = {265–278},
+  numpages  = {14},
+  keywords  = {mapreduce, cluster computing, scheduling, fair sharing},
+  location  = {Paris, France},
+  series    = {EuroSys '10}
+}
+
+@inproceedings{Sparrow,
+  author    = {Ousterhout, Kay and Wendell, Patrick and Zaharia, Matei and Stoica, Ion},
+  title     = {Sparrow: Distributed, Low Latency Scheduling},
+  year      = {2013},
+  isbn      = {9781450323888},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/2517349.2522716},
+  doi       = {10.1145/2517349.2522716},
+  abstract  = {Large-scale data analytics frameworks are shifting towards shorter task durations and larger degrees of parallelism to provide low latency. Scheduling highly parallel jobs that complete in hundreds of milliseconds poses a major challenge for task schedulers, which will need to schedule millions of tasks per second on appropriate machines while offering millisecond-level latency and high availability. We demonstrate that a decentralized, randomized sampling approach provides near-optimal performance while avoiding the throughput and availability limitations of a centralized design. We implement and deploy our scheduler, Sparrow, on a 110-machine cluster and demonstrate that Sparrow performs within 12% of an ideal scheduler.},
+  booktitle = {Proceedings of the Twenty-Fourth ACM Symposium on Operating Systems Principles},
+  pages     = {69–84},
+  numpages  = {16},
+  location  = {Farminton, Pennsylvania},
+  series    = {SOSP '13}
+}
+
+@inproceedings{Spark,
+  title     = {Resilient distributed datasets: A fault-tolerant abstraction for in-memory cluster computing},
+  author    = {Zaharia, Matei and Chowdhury, Mosharaf and Das, Tathagata and Dave, Ankur and Ma, Justin and McCauly, Murphy and Franklin, Michael J and Shenker, Scott and Stoica, Ion},
+  booktitle = {Presented as part of the 9th $\{$USENIX$\}$ Symposium on Networked Systems Design and Implementation ($\{$NSDI$\}$ 12)},
+  pages     = {15--28},
+  year      = {2012}
+}
+
+@misc{Hadoop,
+  author       = {},
+  title        = {Apache Hadoop},
+  howpublished = {\url{https://hadoop.apache.org/}},
+  month        = {},
+  year         = {},
+  note         = {(Accessed on 12/25/2020)}
+}
+
+@incollection{Decima,
+  title     = {Learning scheduling algorithms for data processing clusters},
+  author    = {Mao, Hongzi and Schwarzkopf, Malte and Venkatakrishnan, Shaileshh Bojja and Meng, Zili and Alizadeh, Mohammad},
+  booktitle = {Proceedings of the ACM Special Interest Group on Data Communication},
+  pages     = {270--288},
+  year      = {2019}
+}
+
+@inproceedings{Philly,
+  title     = {Analysis of large-scale multi-tenant $\{$GPU$\}$ clusters for $\{$DNN$\}$ training workloads},
+  author    = {Jeon, Myeongjae and Venkataraman, Shivaram and Phanishayee, Amar and Qian, Junjie and Xiao, Wencong and Yang, Fan},
+  booktitle = {2019 $\{$USENIX$\}$ Annual Technical Conference ($\{$USENIX$\}$$\{$ATC$\}$ 19)},
+  pages     = {947--960},
+  year      = {2019}
+}

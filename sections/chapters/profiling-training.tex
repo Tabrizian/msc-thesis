@@ -4,7 +4,7 @@
 
 \section{Problem Formulation}
 Since the individual jobs may be slowed down when being co-located, we need
-to have aggregate formulation for representing the speed up of multiple jobs
+to have an aggregate formulation for representing the speed up of multiple jobs
 on a single GPU and compare it with the case when they run individually. We
 propose a simple speedup factor that makes it easy to measure the amount of
 speedup, compared to the original case.
@@ -14,10 +14,12 @@ time that it takes for a single iteration of job $i$ to complete when running
 alone is $t_i$. $t'_{i, S}$ denotes the time for single iteration of job $i$
 to complete when being co-located with jobs that belong to $S \subset J$. J
 is the universal set containing all the jobs. We are interested in cases
-where \cref{eq:speedup} is true.
+where the ratio of the sum of the jobs time running individually to the
+longest job time when being co-located is greater than 1, i.e. yields
+speedup. This is represented mathematically in \cref{eq:speedup}.
 
 \begin{equation}
-    \delta = \frac{\sum_{j \in S} t_i}{\max_{j \in S} t'_{j,s}} \geq 1
+    \delta = \frac{\sum_{j \in S} t_j}{\max_{j \in S} t'_{j,s}} \geq 1
     \label{eq:speedup}
 \end{equation}
 
@@ -33,8 +35,8 @@ As shown in \cref{fig:co-location-modeling}, an individual $t'_i$ might
 be greater than $t_i$ but because all the jobs have started together,
 as long as the longest job takes less than the sum of all the jobs,
 co-location is better than running alone. In \cref{fig:co-location-modeling}
-we are going to schedule 3 jobs and we want to find out whether co-location
-is suitable for them. We need to first calculate $t_i$ values which is the
+we schedule 3 jobs and we want to find out whether co-location
+is suitable. We need to first calculate $t_i$ values which is the
 time that each iteration of the job takes when running alone. Then, we need
 to calculate the values for $t'_i$ which is the time that each iteration
 of the job takes when it is co-located with all the jobs in $S$. Next, we
@@ -49,28 +51,28 @@ iterations.
 
 \begin{table}
     \centering
-    \begin{tabular}{cc}
+    \begin{tabular}{ccc}
         \hline
-        Experiment Number & Models \\ \hline \hline
-        0 & vgg19, resnet50 \\ \hline
-        1 & se\_resnet18, resnet50 \\ \hline
-        2 & vgg11, vgg19 \\ \hline
-        3 & resnet18, resnet50 \\ \hline
-        4 & vgg11, resnet50 \\ \hline
-        5 & resnet18, vgg11 \\ \hline
-        6 & vgg19, se\_resnet18 \\ \hline
-        7 & vgg11, se\_resnet18 \\ \hline
-        8 & resnet18, se\_resnet18 \\ \hline
-        9 & resnet18, vgg19 \\ \hline
+        Experiment Number & Models (Co-location of 2) & Models (Co-location of 3) \\ \hline \hline
+        0 & vgg19, resnet50 & resnet18, se\_resnet18, resnet50 \\ \hline
+        1 & se\_resnet18, resnet50 & resnet18, vgg19, resnet50\\ \hline
+        2 & vgg11, vgg19 &  resnet18, vgg11, se\_resnet18\\ \hline
+        3 & resnet18, resnet50 & resnet18, vgg11, vgg19 \\ \hline
+        4 & vgg11, resnet50 & resnet18, vgg19, se\_resnet18 \\ \hline
+        5 & resnet18, vgg11 & vgg11, se\_resnet18, resnet50\\ \hline
+        6 & vgg19, se\_resnet18 & resnet18, vgg11, resnet50 \\ \hline
+        7 & vgg11, se\_resnet18 & vgg11, vgg19, se\_resnet18\\ \hline
+        8 & resnet18, se\_resnet18  & vgg11, vgg19, resnet50\\ \hline
+        9 & resnet18, vgg19 & vgg19, se\_resnet18, resnet50 \\ \hline
     \end{tabular}
     \caption{Description of the experiment numbers}
     \label{tab:exp-description}
 \end{table}
 
 We run a series of experiments to explore the value of $\delta$
-mentioned in \cref{eq:speedup}. The models we used here are two variations of
-ResNet~\cite{resnet} models, two variation of VGG~\cite{vgg} models, and a
-more recent image classification architectures named SE-Net~\cite{senet}. We
+ in \cref{eq:speedup}. The models we used here are two variations of
+ResNet~\cite{resnet} models, two variations of VGG~\cite{vgg} models, and a
+more recent image classification architecture named SE-Net~\cite{senet}. We
 run all the possible combinations of these models. These combinations
 include cases of running more than two jobs together. Since we are studying
 five models, the total number of models used is equal to ${5 \choose 2} = 10$
@@ -85,17 +87,18 @@ three jobs.
 \end{figure}
 
 \Cref{fig:model-parameters} shows the number of parameters that the
-benchmarking models need. The values presented in this figure are for
+benchmarked models need. The values presented in this figure are for
 the time that the model is using a batch size of one. Increasing
-the batch size will scale the number of parameters for each model.
-VGG models family require the largest number of parameters and
-ResNet family require fewer parameters compared to them.
+the batch size will increase the number of parameters for each model.
+VGG models require the largest number of parameters and
+ResNet family require fewer parameters in comparison.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{figs/experiments/layer-2-bs-pytorch}
     \caption{Co-locating two jobs together using various batch sizes. x-axis
-    shows the experiment number described in \cref{tab:exp-description}}
+    shows the experiment number described in \cref{tab:exp-description}. MPS
+    is not enabled in this figure.}
     \label{fig:layer-2-bs-inter}
 \end{figure}
 
@@ -106,22 +109,22 @@ expected, smaller batch sizes provide higher speedups compared to large batch
 sizes. These results are for a per iteration speedup of the models. We
 sampled 10 iterations of the training and calculated the average of these
 samples. We used the mean as the value for $t'$ and $t$ values in
-\cref{eq:speedup}. Using 512 as the batch size, leads to minor slowdown in
-the models that we studied. MPS is not enabled in any of the experiments
+\cref{eq:speedup}. MPS is not enabled in any of the experiments
 shown in this figure. Later in this chapter we will present some other
-experiments explaining the cause for peeks and valleys seen in this figure.
+experiments explaining the cause for peaks and valleys seen in this figure.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{figs/experiments/layer-2-mps-bs-pytorch}
     \caption{Co-locating two jobs together using various batch sizes. x-axis
-    shows the experiment number described in \cref{tab:exp-description}}
+    shows the experiment number described in \cref{tab:exp-description}. MPS
+    is enabled in this figure.}
     \label{fig:layer-2-bs-inter-mps}
 \end{figure}
 
 \Cref{fig:layer-2-bs-inter-mps} shows the value of $\delta$ when two jobs are
-placed together. The difference with \cref{fig:layer-2-bs-inter} is that MPS
-is enabled. As expected, enabling MPS will lead to higher speedup compared to
+placed together when MPS is enabled. As expected, enabling MPS will lead to
+higher speedup compared to
 not enabling MPS. Gaining speed up when MPS is not enabled suggests that for
 certain batch sizes and certain models given the GPU that we used for
 benchmarking, there are time intervals that a GPU is not utilized at all and
@@ -209,7 +212,7 @@ experiments too. In addition the speedup gained from co-location is larger
 when MPS is enabled. This is what we expected.
 
 \subsection{Kernel Analysis of the Jobs}
-We want to find the underlying reason for different values of speedup when
+We want to find the underlying reason for the different values of speedup when
 co-locating different models. As described previously, we noticed that number
 of parameters that each model uses is not a good heuristic for determining
 the compatibility between a set of jobs. Each deep learning training job is
@@ -225,7 +228,7 @@ enabled. Since the kernels are either memory-bound or compute-bound, we will
 focus on the memory bandwidth utilization of the GPU and kernel occupancy for
 the models that we are studying. The kernel analysis is performed using 
 NVIDIA Nsight Compute~\cite{NsightCompute}.
-[put a picture about job and number of kernels]
+%[put a picture about job and number of kernels]
 
 \subsection{Memory Bandwidth Utilization}
 
@@ -243,11 +246,11 @@ NVIDIA Nsight Compute~\cite{NsightCompute}.
 \end{figure}
 
 Assume that each kernel takes $t_i$ time and utilizes $p_i$ percent from the
-memory bandwidth of our V100 GPU. Histogram for $p_i$ values is shown in
+memory bandwidth of our V100 GPU. A histogram for $p_i$ values is shown in
 \cref{fig:memory-util-histo}. Key takeaways from this figure are the following:
 
 \begin{itemize}
-    \item ResNet-50 has a more kernels in almost every utilization category. It is also
+    \item ResNet-50 has more kernels in almost every utilization category. It is also
     the only kernel that has some kernels that are able to almost fully utilize the V100
     bandwidth.
     \item VGG11 has fewer number of kernels in almost every utilization bucket.
@@ -259,12 +262,12 @@ represents the aggregate memory bandwidth utilization of each of these
 models.
 
 \begin{equation}
-    M = \frac{\sum_{i=1}^N p_i t_i}{\sum_{i=1}^N t_i}
+    M = \sum_{i=1}^N p_i t_i
     \label{eq:memory}
 \end{equation}
 
 \Cref{eq:memory} shows the formula for calculating the aggregate memory
-bandwidth utilization for a given job. This is a weighted average of the
+bandwidth for a given job. This is a weighted sum of the
 memory bandwidth utilization. The weights are the duration of the individual
 kernels. If a kernel uses all the memory bandwidth but doesn't take a very
 long time, it shouldn't affect the speedup very much. Likewise if the kernel
@@ -274,32 +277,50 @@ time it should not affect the speedup to a great extent either.
 \Cref{fig:weighted-mem-util} shows the value of $M$ presented in
 \cref{eq:memory} for different models and different batch sizes. As we
 increase the batch size, the $M$ value increases for all the jobs that we
-studied. ResNet-50 utilizes the most amount of memory bandwidth compared
-to other deep learning models. While ResNet-50 does not have the largest
-number of parameters, it is able to utilize the memory bandwidth more
-effectively compared to all the other models. We suspect that this
-may be due to the popularity of this model and the kernels used for
-training this model are highly optimized. Using this figure
-along with the \cref{fig:layer-2-bs-inter-mps}
-can mostly explain why the peaks and valleys occur.
+studied. ResNet-50 utilizes the most amount of memory bandwidth compared to
+other deep learning models. While ResNet-50 does not have the largest number
+of parameters, it is able to utilize the memory bandwidth more effectively
+compared to all the other models. We suspect that this may be due to the
+popularity of this model and as a result the kernels used for training this model are
+highly optimized.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{figs/experiments/wa-mem-util}
-    \caption{Weighted average of the memory utilization of the models using
+    \caption{Weighted sum of the memory utilization of the models using
     various batch sizes}
     \label{fig:weighted-mem-util}
 \end{figure}
 
 \subsection{Compute Utilization}
+Analogous metrics can be created for compute utilization. Assume that each
+kernel takes $t_i$ time and $q_i$ is the occupancy of the kernel on the V100
+GPU. Histogram for $q_i$ values is shown in \cref{fig:occupancy-histo}. Key
+takeaways from this figure are the following:
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{figs/experiments/wa-kernel-occupancy}
-    \caption{Weighted average of the kernel utilization of the models using
-    various batch sizes}
-    \label{fig:weighted-compute-util}
-\end{figure}
+\begin{itemize}
+    \item ResNet-50 has a more kernels in almost every occupancy bucket. 
+    \item VGG11 has fewer number of kernels in almost every utilization bucket.
+    \item Kernels that has the lowest occupancy constitute the majority of the observed kernels.
+\end{itemize}
+
+Using this profiling information, we aim to create a single number that
+represents the aggregate occupancy of each of these models.
+
+\begin{equation}
+    C = \sum_{i=1}^N q_i t_i
+    \label{eq:compute}
+\end{equation}
+
+\Cref{fig:weighted-compute-util} shows the value of $C$ presented in
+\cref{eq:compute} for different models and different batch sizes. As we
+increase the batch size, the $C$ value increases for all the jobs that we
+studied. ResNet-50 has the highest occupancy compared to all the other deep
+learning models. While ResNet-50 does not have the largest number
+of parameters, it is able to achieve higher occupancy compared to all the
+other models. Since $C$ and $M$ are correlated with each other in the
+models we studied, both of them can be used for predicting the speedup
+of the co-location of the deep learning models.
 
 \begin{figure}
     \centering
@@ -314,21 +335,96 @@ can mostly explain why the peaks and valleys occur.
     \label{fig:occupancy-histo}
 \end{figure}
 
-\subsection{Identifying Relationship between Models and Speedup}
 \begin{figure}
     \centering
-    \includegraphics[width=0.7\textwidth]{figs/experiments/speedup}
-    \caption{}
+    \includegraphics[width=0.7\textwidth]{figs/experiments/wa-kernel-occupancy}
+    \caption{Weighted average of the kernel occupancy of the models using
+    various batch sizes}
+    \label{fig:weighted-compute-util}
+\end{figure}
+
+\subsection{Identifying Relationship between Models and Speedup}
+Now, we want to use the metrics described in the previous subsections, to
+build a classifier that is able to predict when the jobs will benefit from
+co-location and when they will suffer from it. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/experiments/speedup-colorful}
+    \caption{Relationship between models and jobs speedup when MPS is disabled.}
     \label{fig:speedup}
 \end{figure}
 
+\Cref{fig:speedup} shows the job speedup vs the pair of metrics discussed in the
+previous subsections. In the experiments described in the figure, MPS is not
+enabled. Each dot represents a single co-location experiment. The experiments
+presented in this figure includes all the previous experiments
+described in this chapter. Each dot may represent an experiment with only two
+jobs or three jobs co-located. Also, the experiments contain all the batch
+sizes from 64 to 256 using all the models described. The y-axis is the sum of
+$C$ values of the individual jobs and x-axis is the sum of $M$ values.
+
+As shown in \Cref{fig:speedup}, speedup does not have a correlation with the
+sum of the $C$ and $M$ values when MPS is not enabled. This result is
+expected because when MPS is not enabled, a kernel with low occupancy that
+takes a long time to complete can block the execution of any other kernel.
+Thus, the speedup value when the MPS is not enabled does not have a
+linear correlation with either $M$ or $C$ values.
+
 \begin{figure}
     \centering
-    \includegraphics[width=0.7\textwidth]{figs/experiments/speedup_mps}
-    \caption{}
+    \includegraphics[width=0.7\textwidth]{figs/experiments/speedup-mps}
+    \caption{Relationship between models and jobs speedup when MPS is enabled.}
     \label{fig:speedup-mps}
 \end{figure}
 
-You might notice that even when co-locating a set of jobs with fixed batch
-sizes, some jobs are more compatible with each other leading to higher boost
-in the speedup, while other jobs are not compatible. 
+\Cref{fig:speedup-mps} shows a similar figure but with MPS enabled. Contrary
+to \cref{fig:speedup-mps}, the cases where speedup is larger than 1 is
+linearly separable. Using this graph we can create simple classifiers that
+are able to predict the speedup given two or three different models. For
+example, a simple criteria like "$\sum C_i \leq 4 * 10^7$" is sufficient for
+our models and settings. This criteria is represented using the red line.
+Since the speedup gain is not very significant for the cases above the red
+line we will not co-locate the jobs above the red line together. We also
+investigated the cases where the red dots happen. All of the red dots happen
+when the batch size is 256. Co-location is not recommended for large batch
+sizes as it may lead to slowdown.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/experiments/speedup-colorful-mps}
+    \caption{Relationship between models and jobs speedup when MPS is enabled.}
+    \label{fig:colorful-speedup-mps}
+\end{figure}
+
+\Cref{fig:colorful-speedup-mps} shows the exact value of the speedup using
+colors. As you can see in this figure, jobs with smaller $C$ and $M$ values
+achieve higher speedups. We will use this heuristic for designing the
+scheduler that uses co-location in \cref{chap:scheduler}.
+
+\subsection{MPS Effect}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figs/experiments/mps-effect}
+    \caption{MPS effect on Speedup}
+    \label{fig:mps-impact}
+\end{figure}
+
+From the previous figures it is hard to argue whether MPS is helpful for the
+speedup or not. \Cref{fig:mps-impact} shows the histogram of the increase in
+speedup when using MPS. Using MPS leads to higher speedup in most cases.
+However, for large batch sizes (e.g. 256) using MPS may lead to resource
+contention and slowdown the jobs execution. 
+
+\section{Summary}
+In this chapter we introduced the formulation for modeling the speedup. This
+formulation is able to generalize to co-location of more than two jobs on a
+single GPU and does not depend on the batch size. We presented detailed
+profiling of the models used in this study. We created metrics that described
+the overall performance of the job in terms of key utilization metrics. We
+also shown why the jobs speedup is not correlated with the values of $C$ and
+$M$ when MPS is not enabled. It was also shown how you can build classifiers
+for detecting the compatible jobs when deciding on which job should be
+co-located with a given job. In the next chapter, we will build on these
+insights to create a real scheduler that is able to utilize co-location to
+decrease the makespan and queuing time.

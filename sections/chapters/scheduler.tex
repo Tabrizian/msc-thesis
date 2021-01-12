@@ -1,0 +1,306 @@
+\chapter{Scheduler Design and Implementation}
+\label{chap:scheduler}
+
+In this chapter we explain the design and implementation of a scheduler that
+uses the metrics described in \cref{chap:profiling-training} to make better
+scheduling decisions. The main goal of this scheduler is to show that co-location
+decreases the makespan and job queuing time when job is not utilizing the GPU
+effectively.
+
+\section{Design}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{figs/scheduler-architecture}
+    \caption{Scheduler Architecture}
+    \label{fig:scheduler-design}
+\end{figure}
+
+An overall architecture of the scheduler is depicted in
+\cref{fig:scheduler-design}. Our scheduler contains two main components an
+\textit{Agent} and a \textit{Scheduler}. For each GPU cluster, there is a
+single scheduler required. The scheduler is the central point that makes
+scheduling decisions. Agent is the component that runs on every node. Each
+node has a number of GPUs. Similar to the Kubernetes~\cite{Kubernetes}
+design, the scheduler only updates the state of the cluster in the database
+and it is the job of the agents to make sure that the state present in the
+database is realized. All the communication between the scheduler and
+the agents is conducted using the REST APIs.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{figs/schedule-job-sequence}
+    \caption{Scheduler Sequence Diagram}
+    \label{fig:scheduler-sequence-diagram}
+\end{figure}
+
+
+The scheduler sequence diagram is shown in
+\cref{fig:scheduler-sequence-diagram}. First, the user submits a batch of
+jobs to the scheduler. Then, the scheduler decides on which jobs should be
+scheduled on which agent and updates the node object corresponding to that
+node. After this, the scheduler notifies the agent corresponding to that node
+so that it can start scheduling the job. Next, the job starts the execution
+on the assigned GPU. After the job finishes, it reports the finish time and
+the time each iteration took back to the scheduler.
+
+\begin{algorithm}[h]
+\SetAlgoLined
+\SetKwFunction{GetJobsInQueue}{GetJobsInQueue}
+\SetKwFunction{GetAllNodes}{GetAllNodes}
+\SetKwFunction{Len}{length}
+\SetKwFunction{Scheduler}{Scheduler}
+\SetKwFunction{UpdateNode}{UpdateNode}
+\SetKwFunction{RemoveJob}{RemoveJobFromQueue}
+\SetKwFunction{Sleep}{Sleep}
+\SetKwData{Jobs}{jobs}
+\SetKwData{Nodes}{nodes}
+\SetKwData{snodes}{scheduled\_nodes}
+\SetKwData{sjobs}{scheduled\_jobs}
+\SetKwData{job}{job}
+\SetKwData{node}{node}
+
+ \While{True}{
+     \Jobs $\leftarrow$ \GetJobsInQueue{}\;
+     \Nodes $\leftarrow$ \GetAllNodes{}\;
+     \If{\Len{\Jobs} $>$ 0}{
+         \snodes,\sjobs$\leftarrow$ \Scheduler{\Jobs,\Nodes}\;
+         \ForEach{\node of \snodes}{
+             \UpdateNode{\node}\;
+         }
+         \ForEach{\job of \sjobs}{
+             \RemoveJob{\job}\;
+         }
+     }
+     \Sleep{$1000$}\;
+ }
+ \caption{Scheduler Loop}
+ \label{algo:scheduler-loop}
+\end{algorithm}
+
+\Cref{algo:scheduler-loop} shows the scheduling loop of the scheduler. The
+scheduler polls the queue for the list of all the jobs in the queue that are
+not currently scheduled. It also gets all the active nodes in the cluster.
+The list of active nodes contains the nodes that already have scheduled a job
+too. Then, the $nodes$ and $jobs$ arrays are passed to the algorithm
+responsible for assigning jobs to nodes. Note that by this design we can
+substitute the $Scheduler$ function with any arbitrary function that we want.
+This function will return a list of scheduled jobs and the nodes that the
+jobs were scheduled on. The scheduler will then remove the scheduled jobs
+from the job queue and update the node object in the database to represent
+the new state. During the update of the node, the agent for that node is also
+notified about the new jobs being scheduled for it. This loop is executed
+every second to dispatch any new jobs to the agents.
+
+\begin{algorithm}[h!]
+    \SetKwProg{Fn}{Function}{}{end}
+    \SetKwFunction{FColocation}{Colocation}
+    \SetKwFunction{FCalculateSpeedup}{CalculateSpeedup}
+    \SetKwFunction{FGetPerfResult}{GetPerfResult}
+    \SetKwFunction{FGetSumJobPerf}{GetSumJobPerf}
+    \SetKwFunction{FLoadMemUtil}{LoadMemUtilInfoFromFile}
+    \SetKwFunction{FLoadOccupancy}{LoadOccupancyInfoFromFile}
+    \SetKwFunction{FSortByValueAsc}{SortByValueAscending}
+    \SetKwFunction{FAppend}{append}
+    \SetKwData{Nodes}{Nodes}
+    \SetKwData{Jobs}{Jobs}
+    \SetKwData{Node}{Node}
+    \SetKwData{Job}{Job}
+    \SetKwData{NodePerf}{NodePerf}
+    \SetKwData{JobPerf}{JobPerf}
+    \SetKwData{Occupancy}{total\_occupancy}
+    \SetKwData{Memutil}{total\_memutil}
+    \SetKwData{JOccupancy}{job\_occupancy}
+    \SetKwData{JMemutil}{job\_memutil}
+    \SetKwData{MemutilInfo}{memutil\_info}
+    \SetKwData{OccupancyInfo}{occupancy\_info}
+    \SetKwData{ModelName}{model\_name}
+    \SetKwData{BatchSize}{batch\_size}
+    \SetKwData{key}{key}
+    \SetKwData{value}{value}
+    \SetKwData{snodes}{scheduled\_nodes}
+    \SetKwData{sjobs}{scheduled\_jobs}
+    \Fn{\FGetPerfResult{\Job}}{
+        \MemutilInfo $\leftarrow$ \FLoadMemUtil{}\;
+        \OccupancyInfo $\leftarrow$ \FLoadOccupancy{}\;
+        \JOccupancy $\leftarrow$ \OccupancyInfo$[\Job.\ModelName][\Job.\BatchSize]$\;
+        \JMemutil $\leftarrow$ \MemutilInfo$[\Job.\ModelName][\Job.\BatchSize]$\;
+        \KwRet{\JOccupancy,\JMemutil}\;
+    }
+    \Fn{\FGetSumJobPerf{\Node}}{
+        \Occupancy $\leftarrow$ 0\;
+        \Memutil $\leftarrow$ 0\;
+        \ForEach{\Job of \Node.\Jobs}{
+            \JOccupancy,\JMemutil = \FGetPerfResult{\Job}\;
+            \Occupancy $\leftarrow$ \JOccupancy $+$ \Occupancy\;
+            \Memutil $\leftarrow$ \JMemutil $+$ \Memutil\;
+        }
+        \KwRet{\Occupancy,\Memutil}\;
+    }
+    \Fn{\FColocation{\Nodes,\Jobs}}{
+        \NodePerf $\leftarrow$ \{\},\JobPerf $\leftarrow$ \{\}\;
+        \sjobs $\leftarrow$ $[]$, \snodes$\leftarrow$ $[]$\;
+        \ForEach{\Node of \Nodes}{
+            \NodePerf$[\Node]$ = \FGetSumJobPerf{\Node}\;
+        }
+        \ForEach{\Job of \Jobs}{
+            \JobPerf$[\Job]$ = \FGetPerfResult{\Job}\;
+        }
+        \label{algo:co-location-sort-1}
+        \FSortByValueAsc{\NodePerf}\;
+        \label{algo:co-location-sort-2}
+        \FSortByValueAsc{\JobPerf}\;
+        \ForEach{\key,\value of \JobPerf.items()}{
+            (\JOccupancy,\JMemutil),\Node $\leftarrow$ \NodePerf$[0]$\;
+            \label{algo:co-location-speedup}
+            \If{\FCalculateSpeedup{\Node,\JOccupancy,\JMemutil} $<$ 1}{
+                break\;
+            }
+            \Node.$\Jobs$.\FAppend{\Job}\;
+            \snodes.\FAppend{\Node}\;
+            \sjobs.\FAppend{\Job}\;
+            \label{algo:co-location-sort-3}
+            \FSortByValueAsc{\NodePerf}\;
+        }
+        \KwRet{\snodes,\sjobs}\;
+    }
+ \caption{Co-location Algorithm}
+ \label{algo:co-location}
+\end{algorithm}
+
+\Cref{algo:co-location} describes the co-location algorithm that we used for
+scheduling the jobs. Note that the \textit{Colocation} replaces the
+\textit{Scheduler} function in \Cref{algo:scheduler-loop}. This function
+should return a list of nodes that a job is scheduled on and the list of jobs
+that are being scheduled. Using the weighted memory utilization and weighted
+kernel occupancy results presented in \cref{chap:profiling-training}, we try
+two schedule the jobs to achieve the largest amount of speedup. The heuristic
+that we use is to schedule the job with lowest weighted kernel occupancy on a
+node that has the lowest sum of kernel occupancies. This heuristic is based
+on \cref{fig:colorful-speedup-mps}. As explained, the smaller values of
+weighted kernel occupancy and weighted memory utilization lead to higher
+speedup. In \cref{algo:co-location} there is also a threshold for when
+to stop co-locating jobs. In \cref{fig:speedup-mps} it fairly easy to use
+a linear regression algorithm to predict the speedup. We use that to avoid
+packing more jobs together on a single GPU that will cause a slowdown.
+
+The complexity of the \textit{Colocation} function is $O(m\log m) + O(n\log
+n) + O(mn)$ where $m$ is the number of jobs that are going to be scheduled
+and $n$ is the number of nodes. The $O(k\log k)$ terms are for the sorting
+performed in \cref{algo:co-location-sort-1,algo:co-location-sort-2} of
+\cref{algo:co-location}. We used $O(n)$ for sorting in
+\cref{algo:co-location-sort-3} of \cref{algo:co-location} since we are
+inserting into an already sorted array. Since this is an array we need
+to shift all the elements and thus we need $O(n)$. This loop is executed $m$
+times for each element in the array thus the overall complexity for the last
+section of the function is $O(mn)$.
+
+\section{Implementation}
+The whole platform for the scheduler is implemented using Python. The
+scheduler and the agent components are completely independent and communicate
+with each other over HTTP ReST. We used Redis~\cite{Redis} to store the state
+of the cluster. Redis is an in-memory key-value database. Redis is executed
+on the same node as the scheduler. We used Flask~\cite{Flask} for implementing
+the HTTP interfaces.
+
+The first component that must be started is the scheduler. The scheduler
+will connect to the Redis database and start the scheduling loop to poll
+for any new submitted jobs.
+
+\subsection{Agent API}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ c c c}
+        Endpoint & Description & Method \\ \hline \hline
+        /run     & Refresh the node jobs and execute any jobs assigned to it & GET
+    \end{tabular}
+    \caption{Agent API}
+    \label{tab:agent-api}
+\end{table}
+
+\Cref{tab:agent-api} shows the Agent API. The API of the agents is very simple
+and contains a single \textit{/run} endpoint. This endpoint is used to notify the agent
+about the new jobs being scheduled for it.
+
+\subsection{Scheduler API}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{c c c}
+        Endpoint & Description & Method \\ \hline \hline
+        /jobs    & Create a batch of jobs & POST \\ \hline
+        /job     & Create a single jobs & POST \\ \hline
+        /jobs     & Get all the jobs inside the queue & GET \\ \hline
+        /jobs     & Delete all the jobs inside the queue & DELETE \\ \hline
+        /node     & Create a new node & POST \\ \hline
+        /nodes     & Get all the nodes inside the cluster & GET \\ \hline
+        /node/$<$name$>$     & Get the details for a node& GET \\ \hline
+        /node/$<$name$>$     & Update the node status & PUT \\ \hline
+        /nodes     & Delete all the nodes & DELETE \\ \hline
+        /finished\_job & Record the status of a finished job & POST \\ \hline
+        /finished\_jobs & Get all the finished jobs & GET \\ \hline
+        /finished\_jobs     & Delete all the finished jobs & DELETE \\ \hline
+    \end{tabular}
+    \caption{Scheduler API}
+    \label{tab:scheduler-api}
+\end{table}
+
+\Cref{tab:scheduler-api} shows the Scheduler API. These APIs are created for putting
+objects inside the Redis database. We serialize the Python objects for storing them
+inside the Redis. As mentioned earlier, Redis is a key-value database. The keys
+that we use for this project are "submitted\_jobs", "nodes", and "finished\_jobs".
+
+The endpoints starting with "/job" are used for managing the job queue. Every
+job posted to the queue using these APIs will place the job at the end of the
+queue. The jobs added using this endpoint will be placed in the
+\textit{submitted\_jobs} key of the database. A sample JSON for the job submitted
+to the "/apis" is shown in \cref{list:job-object}.
+
+\begin{listing}
+\begin{minted}{json}
+{
+    "model_name": "vgg11",
+    "batch_size": 128,
+    "lr": 0.01,
+    "dataset": "cifar10",
+    "optim": "sgd",
+    "iters": 100,
+    "dataset_path": "./data",
+    "workers": 2,
+    "weight_decay": 0.0001,
+    "momentum": 0.1,
+    "num_class": 10
+}
+\end{minted}
+\caption{Sample job object}
+\label{list:job-object}
+\end{listing}
+
+Endpoints starting with "/nodes" are used for managing the nodes in the
+cluster. Whenever a new node joins the cluster, it will report the GPUs
+available on the machine and let the scheduler know about it using these
+APIs. These APIs will modify the "nodes" key of the redis database. A sample
+JSON of the node object is shown in \cref{list:node-object}. In this listing,
+the node has a single GPU and the node name is "node-1".
+
+\begin{listing}
+\begin{minted}{json}
+{
+    "gpus": ["0"],
+    "name": "node-1"
+}
+\end{minted}
+\caption{Sample node object}
+\label{list:node-object}
+\end{listing}
+
+"/finished\_job" endpoints are used for reporting the statistics about the
+job completion. The statistics include the finish time, start time, and
+per iteration duration. These endpoints will modify the "finished\_jobs"
+key of the redis database. This endpoint is always triggered by the
+agents.
+
+\section{Summary}
+In this chapter we presented the algorithm for co-locating deep learning
+jobs. We also presented the design and implementation of a simple scheduler
+that leverages co-location as a method to decrease the queuing time of the
+jobs. Also, the scheduler is designed in a modular way to allow easy
+implementation of different scheduling algorithms.

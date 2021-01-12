@@ -1,2 +1,289 @@
 \chapter{Evaluation}
 \label{chap:evaluation}
+
+In this chapter we present the end-to-end evaluation of the
+\cref{algo:co-location}. We use the metrics presented in
+\cref{chap:profiling-training} to guide the scheduler to perform appropriate
+co-locations. The scheduling metrics that we are interested in are
+\textit{makespan}, \textit{job completion time (JCT)}, and \textit{queuing
+time}. Makespan is a metric used to describe the time between the submission
+of the first job and the departure of the last job from the cluster. Makespan
+is a key indicator of the benefit that results from co-locating jobs. JCT is
+the time between the time that the job starts running and the time that the
+job leaves the cluster. Queuing time is the time between the job start time
+and the time that the job was submitted to the cluster. Because of diversity
+in the DL models and lack of a complete benchmark in this area we present the
+worst-case and best-case scenarios for the workloads that might occur for
+co-location. For each scenario we present two different set of results.
+One set of results when the number of data workers is 10 and another
+case where the number of data workers is 2. The data workers are used
+for loading the data from hard disk to the main memory and prepare
+them for training. The dataset used for training all the models is the
+CIFAR10~\cite{CIFAR10} dataset.
+
+\section{Experimental Setup}
+We evaluated \cref{algo:co-location} on a real system with two V100 GPUs
+running Ubuntu 18.04. Each of the V100 GPUs are placed in different machines
+connected to each other over the network. We used the PyTorch
+implementation of the models in the analysis. We compare
+\cref{algo:co-location} with First in First out (FIFO) algorithm in which
+jobs are scheduled in the order of arrival. FIFO serves as the baseline for
+running all the jobs alone. We also present our results with MPS both enabled
+and disabled.
+
+\section{Best-case Scenario}
+The best-case scenario is that all the jobs submitted to the cluster have
+small batch size. We use the models that have the largest gain from
+co-location in \cref{chap:profiling-training}. The models are VGG19, VGG11,
+and ResNet-18 with a batch size of 64. We submit two set of these jobs and
+train them for 1000 iterations.
+
+%\subsection{Two Data Workers}
+%We set the number of data workers to 2 data worker. This will help us
+%determine the benefit of using co-location when there not enough CPUs
+%available to load the data from disk. This is specially the case for larger
+%batch sizes because it requires to load more data from the disk.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-jct-best_case}
+        \vspace*{\capshift}
+        \caption{Ten Data Workers}
+        \label{fig:scheduler-jct-best-case}
+    \end{subfigure}
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-jct-very_best_case}
+        \vspace*{\capshift}
+        \caption{Two Data Workers}
+        \label{fig:scheduler-jct-very-best-case}
+    \end{subfigure}
+    \caption{CDF of job completion time for the best-case scenario.}
+\label{fig:scheduler-jct-best}
+\end{figure}
+
+\Cref{fig:scheduler-jct-best} shows the CDF of the job completion time
+when scheduling using FIFO and co-location. The histogram shows that FIFO
+attains a smaller job completion time for each individual job. The reason for
+this is that in FIFO jobs have exclusive access to the GPU and the individual
+kernels are able to run faster. However, when the jobs are being co-located,
+the jobs do not have exclusive access to the GPU and they are running slower
+compared to the original case. Using \cref{eq:speedup} we can determine
+whether they are running faster together or not. We submit the jobs in one
+batch altogether and it is the job of the scheduler to determine the best
+co-locations. \Cref{algo:co-location} is able to find the best co-location
+according to the profiling result in this scenario. When using smaller number
+of data workers, the JCT of the jobs increase for FIFO. This suggests that
+FIFO needs more data workers to load enough batches of data for efficient
+training.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-queuing-best_case}
+        \vspace*{\capshift}
+        \caption{Ten Data Workers}
+        \label{fig:scheduler-queuing-best-case}
+    \end{subfigure}
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-queuing-very_best_case}
+        \vspace*{\capshift}
+        \caption{Two Data Workers}
+        \label{fig:scheduler-queuing-very-best-case}
+    \end{subfigure}
+    \caption{CDF of queuing time for the best-case scenario.}
+\label{fig:scheduler-queuing-best}
+\end{figure}
+
+\Cref{fig:scheduler-queuing-very-best-case} shows the queuing time of the
+jobs under two different policies. As expected, the queuing time is
+significantly smaller compared to FIFO. This is because the jobs get
+scheduled much faster without needing to wait for the completion of the other
+jobs.
+
+Small queuing time is especially important for the hyperparameter tuning
+phase of the DL training. AutoML~\cite{Hypersched,ASHA} techniques rely on
+the current progress of the jobs to determine the ones that are promising.
+Small queuing time helps with faster scheduling of more jobs. By monitoring
+the progress of more jobs, we can detect the non-promising jobs and stop
+their execution to avoid wasting resources.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-makespan-best_case}
+        \vspace*{\capshift}
+        \caption{Ten Data Workers}
+        \label{fig:scheduler-makespan-best-case}
+    \end{subfigure}
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-makespan-very_best_case}
+        \vspace*{\capshift}
+        \caption{Two Data Workers}
+        \label{fig:scheduler-makespan-very-best-case}
+    \end{subfigure}
+    \caption{Makespan for the best-case scenario.}
+\label{fig:scheduler-makespan-best}
+\end{figure}
+
+\Cref{fig:scheduler-makespan-best} shows the makespan for different
+scheduling policies. Co-location gives a 2x decrease in the makespan for this
+specific workload when using two data workers. This figure highlights the
+importance of co-location specially when the utilization of the individual
+jobs is small. While the individual jobs see an increase in the JCT value,
+this increase is the price that the jobs pay for better utilization of the
+GPUs and smaller makespan values.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-tradeoff-best_case}
+        \vspace*{\capshift}
+        \caption{Ten Data Workers}
+        \label{fig:scheduler-tradeoff-best-case}
+    \end{subfigure}
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-tradeoff-very_best_case}
+        \vspace*{\capshift}
+        \caption{Two Data Workers}
+        \label{fig:scheduler-tradeoff-very-best-case}
+    \end{subfigure}
+    \caption{Tradeoff in using co-location for the best-case scenario.}
+\label{fig:scheduler-tradeoff-best}
+\end{figure}
+
+\Cref{fig:scheduler-tradeoff-best} shows that makespan can be reduced by more
+than 50\% in exchange for an increase in JCT of 25\% in this scenario when
+using two data workers. When using ten data workers makespan can be reduced
+by more than 37\% in exchange for an increase in JCT of 61\% in this
+scenario.
+
+\section{Worst-case Scenario}
+The worst-case scenario is that we make bad co-location decisions by putting
+the jobs that together lead to minor speedup. Also, we need to make sure that
+our classifier predicts that the jobs will benefit from the co-location.
+Based on our profiling data, the speedup value for co-location of SENet18 and
+ResNet18 is 1.02 when the batch size is 256. Like the previous section, we
+present the results for two data workers and ten data workers.
+
+\Cref{fig:scheduler-jct-worst} shows the CDF of job completion. Similar to the
+previous figure FIFO has the smallest JCT. The reason is that FIFO jobs are
+exclusively running on the GPU and hence they are faster. An important difference
+between \cref{fig:scheduler-jct-worst} and \cref{fig:scheduler-jct-best} is that
+when the batch size is large, jobs' JCT never come close the FIFO case. The 
+resource contention makes it hard to become close to the performance of job
+running alone.
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-jct-worst_case}
+        \vspace*{\capshift}
+        \caption{Ten Data Workers}
+        \label{fig:scheduler-jct-worst-case}
+    \end{subfigure}
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-jct-very_worst_case}
+        \vspace*{\capshift}
+        \caption{Two Data Workers}
+        \label{fig:scheduler-jct-very-worst-case}
+    \end{subfigure}
+    \caption{JCT for the worst-case scenario.}
+\label{fig:scheduler-jct-worst}
+\end{figure}
+
+\Cref{fig:scheduler-queuing-worst} shows the queuing time for the jobs in
+this scenario. In this scenario two jobs are co-located together on a single
+GPU. Since we have a total of 4 jobs and 2 GPUs we experience almost no
+queuing delay compared to the FIFO baseline.
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-queuing-worst_case}
+        \vspace*{\capshift}
+        \caption{Ten Data Workers}
+        \label{fig:scheduler-queuing-worst-case}
+    \end{subfigure}
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-queuing-very_worst_case}
+        \vspace*{\capshift}
+        \caption{Two Data Workers}
+        \label{fig:scheduler-queuing-very-worst-case}
+    \end{subfigure}
+    \caption{CDF of queuing time for the worst-case scenario.}
+\label{fig:scheduler-queuing-worst}
+\end{figure}
+
+\Cref{fig:scheduler-makespan-worst} shows the result for makespan. The gains
+for this case are smaller compared to the \cref{fig:scheduler-makespan-best}.
+When using two data workers, there is a significant decrease in makespan
+compared to FIFO. The reason is that FIFO requires more data workers to be able
+to use the GPU efficiently. Using small number of workers, affects the performance
+of individual jobs and leads to 25\% increase in makespan for large batch sizes.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-makespan-worst_case}
+        \vspace*{\capshift}
+        \caption{Ten Data Workers}
+        \label{fig:scheduler-makespan-worst-case}
+    \end{subfigure}
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-makespan-very_worst_case}
+        \vspace*{\capshift}
+        \caption{Two Data Workers}
+        \label{fig:scheduler-makespan-very-worst-case}
+    \end{subfigure}
+    \caption{Makespan for the worst-case scenario.}
+\label{fig:scheduler-makespan-worst}
+\end{figure}
+
+\Cref{fig:scheduler-tradeoff-worst} shows the tradeoff for using different scheduling policies.
+The difference between this figure and \cref{fig:scheduler-tradeoff-best} is that in this scenario
+using MPS leads to larger JCT compared to not using MPS. Still, MPS is able to attain lower makespan
+compared to not using MPS.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-tradeoff-worst_case}
+        \vspace*{\capshift}
+        \caption{Ten Data Workers}
+        \label{fig:scheduler-tradeoff-worst-case}
+    \end{subfigure}
+    \begin{subfigure}[b]{\twocolfigwidth}
+        \includegraphics[width=\textwidth]{figs/scheduler/scheduling-tradeoff-very_worst_case}
+        \vspace*{\capshift}
+        \caption{Two Data Workers}
+        \label{fig:scheduler-tradeoff-very-worst-case}
+    \end{subfigure}
+    \caption{Tradeoff in using co-location for the worst-case scenario.}
+\label{fig:scheduler-tradeoff-worst}
+\end{figure}
+
+We showed that co-location can work in different scenarios. As expected the
+decrease in makespan is larger when the batch size is small and when the models
+are not able to utilize the GPU effectively. Smaller number of data workers
+does not significantly affect the makespan when using co-location. Using MPS
+will also improve the performance in all the different scenarios.
+Additionally showed why co-location can significantly reduce the queuing time.
+
+\section{Discussion}
+We presented end-to-end analysis of the co-location algorithm using two
+different scenarios. We showed that when the batch size is small and model
+has a low memory bandwidth and SM utilization, co-location leads to an almost
+2X speedup. We also showed that in the worst case scenario co-location is
+slightly better than FIFO. Also, if there are not enough CPUs available on
+the system for data workers, co-location can lead to significant decrease in
+makespan compared to the FIFO case. Co-location is a trade-off between the
+makespan and the JCT metrics. Co-location leads to smaller queuing times and
+larger JCT for individual jobs. If the jobs require early feedback (e.g.
+hyperparameter tuning) co-location becomes more important as it will give
+faster feedback to a larger number of jobs so that we can decide whether we
+want to continue running them or not. However, if the jobs require low
+latency and need to run to completion in the shortest amount of time,
+co-location is not a good solution. The other down side to co-location is
+requiring extensive profiling to find out about the SM and memory bandwidth
+utilization. However, having a database of the common kernels used in
+the deep learning frameworks and their profiling information can omit
+the need for the extensive profiling.

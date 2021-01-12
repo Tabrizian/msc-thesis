@@ -2,52 +2,55 @@
 \label{chap:introduction}
 Machine Learning has transformed the world. Nowadays, there are various
 machine learning models used in production systems. Models that provide image
-classification, movie recommendations, and even photography. These
+classification, movie recommendations, and even driving. These
 advancements have been made possible thanks to the specialized hardwares such
 as GPUs, TPUs\cite{TPU}, and FPGAs. The process of training these models is a
 trial-and-error approach combined with intuition. It requires tuning a large
-number of hyperparameters to achieve the desired accuracy. To achieve the
-best accuracy in the shortest amount of time, usually many similar jobs are
+number of hyperparameters to achieve a desired accuracy. To achieve the best
+accuracy in the shortest amount of time, usually many similar jobs are
 dispatched that only change a single hyperparameter. Research institutes and
-companies have access to compute clusters that provide 100s to 1000s of GPUs.
-It will require a scheduler to map the jobs to the resources. The
-users of the jobs need to specify the resource requirements of the jobs too.
-The scheduler will take in these specifications and map it to the the available
-resources. GPUs with their unique characteristics add a new dimension to this problem.
-The main problem with the GPUs is that they were not originally designed for
+companies have access to large compute clusters. These compute clusters
+require a scheduler to map the jobs to the resources. The users of the jobs
+need to specify the resource requirements of the jobs too. The scheduler will
+take in these specifications and map it to the the available resources. GPUs
+with their unique characteristics add a new dimension to this problem. The
+main problem with the GPUs is that they were not originally designed for
 multi-tasking. Unlike conventional resources like CPUs and main memory, that
 have hardware support for resource sharing, GPUs were originally designed for
-single process use. The assumption was that the application is able to 
+single process use. The assumption was that the application is able to
 effectively use all the resources on a GPU and adding another application to
-the GPU will hinder the performance. However, starting from the Volta\cite{Volta}
-architecture GPUs now include hardware support for execution of multiple processes
-together.
+the GPU will hinder the performance. However, starting from the
+Volta\cite{Volta} architecture GPUs now include hardware support for
+execution of multiple processes together.
 
-In this dissertation, we explore the effect of co-locating multiple deep learning
-training jobs together. We devise metrics that guide the scheduler on which workloads
-can benefit from co-location and which workloads should not be placed together as it 
-will decrease the training speed for these jobs. Additionally, we study the potential
-reasons behind the incompatibility of the workloads and how they can be used to predict
-the incompatible jobs.
-
-\Cref{chap:background} provides a background on how GPUs work and how they
-can be programmed. It also discusses various models that multiple tasks
-can be executed at the same time on the GPU.
-
-\Cref{chap:motivation} discusses the motivation for co-location of the DL
+In this thesis, we explore the effect of co-locating multiple deep learning
+training jobs together. We devise metrics that guide the scheduler on which
+workloads can benefit from co-location and which workloads should not be
+placed together. Additionally, we study the reasons behind the
+incompatibility of the workloads and how we can predict the incompatible
 jobs.
 
+This thesis is organized as follows. \Cref{chap:background} provides a
+background on how GPUs work and how they can be programmed. It discusses how
+various tasks can be executed at the same time on the GPU. We also discuss
+and compare this work to the related work in this area.
+
+\Cref{chap:motivation} discusses the motivation for co-location of the DL
+jobs. We discuss the unique characteristics of DL jobs and GPU clusters
+that make co-location a good choice.
+
 \Cref{chap:profiling-training} provides in-depth profiling information. This
-profiling information help understand why co-location improves the
+profiling information helps us understand why co-location improves the
 performance in some cases while in other cases it may hinder the performance.
-In this chapter we study the co-location of training jobs.
 
-\Cref{chap:profiling-inference} studies the co-location effect of inference
-jobs. In this chapter we study the applicability of the performance models
-created for co-location of training jobs for inference jobs.
+\Cref{chap:scheduler} discusses the design and implementation of the
+scheduler that uses co-location. We provide an algorithm that uses
+the profiling information from \cref{chap:profiling-training} to
+identify co-locations that will lead to speedup.
 
-\Cref{chap:related} provides a survey of the related work in this area and
-how this work is different from them.
+\Cref{chap:evaluation} this chapter provides end-to-end evaluation of the
+co-location algorithm. We study the effect of co-location in two different
+scenarios. 
 
 \Cref{chap:future} concludes the paper and discusses the potential future
 research directions that can be built on this work.

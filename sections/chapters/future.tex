@@ -3,8 +3,8 @@
 
 In this thesis we presented a detailed study on the performance impact of
 co-location of different deep learning models on a single GPU. We showed how
-simple metrics like weighted memory bandwidth utilization and weighted
-occupancy can accurately predict the speedup. The key takeaways from this
+metrics like weighted memory bandwidth utilization and weighted occupancy can
+help with selecting compatible co-locations. The key takeaways from this
 thesis are the following:
 
 \begin{itemize}
@@ -44,10 +44,16 @@ when they run individually. This will further improve the performance of
 co-location by only allowing the execution of compatible kernels.
 
 Evaluation of proposed approaches on GPUs other than V100 would be also
-useful. In this work we only had access to a single V100 gpu and thus we
-could not verify whether these results hold for other Volta and Ampere GPU
-architectures too or not. Also, MPS has not yet been released for the recent
+useful. In this work we only had access to V100 GPUs and thus we could not
+verify whether these results hold for other than architectures other than
+Volta or not. Also, MPS has not yet been released for the recent
 Ampere~\cite{Ampere} architecture. If the same results hold for other GPU
-architectures too, a one-time creation of the performance model would
-be sufficient to guide the scheduling decisions for all different
-GPU architectures.
+architectures too, a one-time creation of the performance model would be
+sufficient to guide the scheduling decisions for all different GPU
+architectures.
+
+Studying the security implications of co-location is also an interesting
+extension of this work. Co-located jobs pose a great security threat 
+in the cloud environments that prevents co-location being implemented
+in the public cloud. Studying the address isolation and the side channels
+that co-location exposes can be a future step for this work.

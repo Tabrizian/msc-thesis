@@ -1,17 +1,18 @@
-\chapter{Background}
+\chapter{Background and Related Work}
 \label{chap:background}
 
 In this chapter we will discuss some background information related to this
-work. We will discuss the basics of general programming on GPUs and how
-scheduling multiple processes work on GPUs.
+work. We will discuss the basics of generic programming on GPUs and how
+scheduling multiple processes work on GPUs. We also discuss the related
+work to this project.
 
 \section{Graphical Processing Units (GPUs)}
 
-GPUs were among the first accelerators to be introduced alongside with CPUs.
-GPUs are throughput optimized in contrast to the CPUs which are latency
-optimized. They consist of many cheap cores that can perform large number of
-operations in parallel. They also have a large memory bandwidth that helps
-them bring data into these cores in efficiently.
+GPUs were among the first accelerators to be introduced as CPUs
+co-processors. GPUs are throughput optimized in contrast to the CPUs which
+are latency optimized. They consist of many inexpensive cores that can perform
+large number of operations in parallel. They also have a large memory
+bandwidth that helps them bring data into these cores efficiently.
 
 \begin{figure}
     \centering
@@ -36,6 +37,9 @@ workloads. They were introduced in the Volta\cite{Volta} microarchitecture in
 As shown in \cref{fig:gpu-architecture}, GPUs have a memory hierarchy
 similar to the CPUs. The main difference is including a shared memory
 that can be explicitly managed by the users program.
+
+
+GPU memory hierarchy consists of:
 
 \begin{itemize}
     \item \textbf{Registers}: registers are allocated to each individual thread.
@@ -83,10 +87,10 @@ warps in comparison with the total warps that could be scheduled on a given
 GPU. There is another concept called \textit{Achieved Occupancy}. Achieved
 Occupancy measures the scheduled number of warps when the kernel is
 actually running on the GPU. This can be different from the Theoretical
-Occupancy because a given thread in warp might we stalled on a memory load
-and is not yet ready to be scheduled. If there is not enough warps in flight
-ready to be scheduled instead of the stalled thread block, the achieved
-occupancy will be lower than the Theoretical Occupancy. Theoretical Occupancy
+Occupancy because a given thread in a warp might be stalled on a memory load
+and may not be ready to be scheduled. If there is not enough warps inflight
+ready to be scheduled, the achieved occupancy will be lower than the
+Theoretical Occupancy. Theoretical Occupancy
 serves as the upper bound for the Achieved Occupancy.
 
 \subsubsection{Life Cycle of a GPU accelerated Application}
@@ -99,8 +103,8 @@ serves as the upper bound for the Achieved Occupancy.
 
 \Cref{fig:cudalifecycle} shows lifecycle of a typical CUDA application. The
 application starts with allocating memory on the GPU. Then, it will copy
-data from the host memory into the GPU memory. After that, the kernel required
-to run the computation is executed. When the computation is complete, all the
+data from the host memory into the GPU memory. After that, the kernel
+is executed. When the computation is complete, all the
 results are copied back into the host memory. All these operations must be
 executed inside a \textit{CUDA context}. Usually there is one CUDA context
 associated with each process. In the \textit{Exclusive mode}, GPUs give
@@ -114,12 +118,12 @@ in \cref{sec:mps}.
 \subsubsection{CUDA Streams}
 CUDA Stream is a software construct containing a series of commands that must
 be executed in order. Work from different streams can be executed
-concurrently. Recent GPUs are capable of executing work concurrently from 
+concurrently. Recent GPUs are capable of executing work concurrently from
 different CUDA streams belonging to the same CUDA context. Without
-MPS~\cite{MPS}, it is not possible to run commands from another CUDA context
-unless the work from the current CUDA context has finished. A common use case
-for CUDA streams is overlapping computation and communication to speedup the
-Kernel execution.
+Multi-Process Service(MPS)~\cite{MPS}, it is not possible to run commands
+from another CUDA context unless the work from the current CUDA context has
+finished. A common use case for CUDA streams is overlapping computation and
+communication to speedup the Kernel execution.
 
 \subsubsection{Multi-Process Service (MPS)}
 \label{sec:mps}
@@ -136,7 +140,7 @@ client-server architecture. All the processes that want to run on the
 GPU are submitted to the the MPS server. MPS is useful when an individual
 job is not able to saturate all the GPU resources. Before Volta, MPS
 could not isolate the memory address of different CUDA contexts running
-on the same GPU. After Volta MPS has improved the address space isolation
+on the same GPU. After Volta, MPS has improved the address space isolation
 along with improved performance through hardware support for MPS.
 
 \Cref{fig:context-scheduling} shows how CUDA contexts interact with the GPU
@@ -181,7 +185,7 @@ contains the input data and the last layer is called the output layer. The
 intermediate layers in this network is called the hidden layers. Each of the
 nodes in these layers is called a neuron. Each neuron in every layer needs to
 use a function for activation. The ultimate goal of a neural network is to
-learn a set of weights that performs best on the test data set. The process
+learn a set of weights that perform best on the test data set. The process
 of learning the optimal weights is referred to as \textit{Training}. The
 neural network starts with random weights. During each iteration of the
 training a sample from the training data set is passed in the forward
@@ -217,9 +221,9 @@ frameworks are usually implemented in C++ for better performance with APIs in
 the languages that the community prefers like Python. Designing a deep
 learning framework is a very challenging task. DL frameworks have to adapt
 very quickly with the latest versions of the accelerators. New accelerators
-are announced around every year. With multiple accelerators in this field
+are announced around every year. With multiple accelerators present in this field,
 making sure that you have the best performing algorithm on the new hardware
-is not very easy. Also, there are new models being introduced on a daily
+is not easy. Also, there are new models being introduced on a daily
 basis. Making sure that all the state-of-the-art models produce the same
 result on this large spectrum of hardware of software versions is almost an
 impossible task. Because of this, mainstream frameworks are usually a result
@@ -230,13 +234,13 @@ of collaboration between hardware vendors and big software companies.
 Tensorflow~\cite{Tensorflow} is one of the first mainstream DL frameworks
 open sourced by Google. Tensorflow uses a \textit{computation graph} to
 describe all the computation necessary to achieve a task. When using a
-computation graph the user has to specify all the operations that it needs
+computation graph, the user has to specify all the operations that it needs
 beforehand. After that, they can compile the computation graph and get the
 results. This model allows more optimizations to be performed during the
 compile time. However, this model may limit the users ability to debug the
 values when creating the model since the intermediate values are not
 available. To fix this problem, Tensorflow introduced an eager execution
-mode, that uses an imperative model to make it easier to debug the models.
+mode that uses an imperative model to make it easier to debug the models.
 This model is usually slower as it doesn't have the ability to have an
 omniscience view of the whole computation to perform the optimizations.
 
@@ -248,7 +252,7 @@ necessary information for calculating the gradient of arbitrary PyTorch code.
 Also, instead of using a computation graph, PyTorch uses an imperative
 programming model that increases the developer productivity. Some research
 frameworks~\cite{Janus} have also taken a hybrid approach to maintain both a
-high developer productivity and optimized and fast execution.
+high developer productivity and an optimized, fast execution.
 
 \subsection{MXNet}
 MXNet~\cite{MXNet} was introduced in 2015. MXNet is an Apache project
@@ -256,6 +260,151 @@ supported by many universities and companies. MXNet tries to support both of
 the programming paradigms discussed in
 \cref{subsec:pytorch,subsec:tensorflow}. MXNet also supports a
 \textit{hybrid} approach similar to Janus~\cite{Janus}.
+
+\section{Related Work}
+\label{chap:related}
+
+\subsection{GPU Scheduling}
+
+In the area of GPU schedulers for deep learning workloads there are various
+related works to the work presented in this thesis. Optimus~\cite{Optimus} is
+one of the earlier works in this area. The main goal of this work is which
+job should be given more workers so that the total job completion time for a
+set of jobs is minimized. It is assumed that the jobs use the Parameter
+Server~\cite{ParameterServer} architecture. They learn the convergence curve
+for a given job to predict the number of required iterations until the
+completion. Using this information, they can measure how long the job is
+going to last. Then, they create a heuristic algorithm that increases the
+number of workers or parameter servers for a job that gains more speed up
+compared to the other jobs. This work is complementary to our work. We can
+augment their techniques with our co-location algorithms to better utilize
+the GPUs.
+
+Tiresias~\cite{Tiresias} presented a more realistic scheduling algorithm.
+Tiresias is able to use the historical data of the jobs to minimize the job
+completion time. They do not adaptively change the number of workers for a 
+given job. This is a more realistic approach since increasing the number
+of workers affects the accuracy and may require retuning all the
+hyperparameters. They do not consider the packing of multiple jobs on the
+same GPU.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/nnmemory}
+    \caption{Memory Allocation in Forward and Backward Pass}
+    \label{fig:memory-allocation-frameworks}
+\end{figure}
+
+\begin{equation}
+    w(t+1) = w(t) - \eta * \nabla Q(w(t))
+    \label{eq:sgd}
+\end{equation}
+
+Gandiva~\cite{Gandiva} introduced a fast context switch mechanism to avoid
+starvation of the jobs in deep learning clusters. They observed that the GPU
+memory usage of a job is not constant during the training and is minimum
+between the iterations. \Cref{fig:memory-allocation-frameworks} shows how memory
+allocation is performed during the training. In this figure, we are assuming
+the training of a convolutional neural network~\cite{CNN}. The weights
+associated with each layer is always present in the GPU. As the input
+traverses different layers of the neural network, it creates
+\textit{activations}. Activations must be stored for each layer. The
+activations are required for calculating the gradients in \cref{eq:sgd}.
+These gradients will be calculated during the backward pass. In the backward
+pass, the activation values can be discarded and as a consequence the memory
+allocated for each of the layers may be freed. Gandiva leverages this pattern,
+and does not interrupt the job during the forward or backward passes to reduce
+the amount of data that needs to be copied during the checkpointing process.
+Gandiva also included a mechanism for "packing" the jobs to reduce the queuing
+time and improve JCT. They employed random packing to find the matching job
+pairs. As mentioned in~\cite{Gavel}, this strategy is not sufficient for finding
+beneficial co-locations.
+
+Chic~\cite{Chic} introduced the idea of adaptively changing the number of workers
+using a reinforcement learning algorithm. They showed that using reinforcement
+learning will lead to better results compared to Optimus~\cite{Optimus}. However,
+they still didn't consider the packing of multiple jobs into a single GPU.
+
+Gavel~\cite{Gavel} was the first scheduler to design an scheduling mechanism
+that can use many different scheduling objectives. Gavel has support for
+hierarchical and multi-domain scheduling policies. Their modeling of the
+scheduling problem is able to take into account packing of multiple jobs
+into a single GPU if the appropriate profiling information is available.
+They also include a throughput estimator that is able to estimate the 
+co-location throughput of unseen jobs.
+
+\subsection{GPU Sharing}
+Salus~\cite{Salus} provided a fast context switch mechanism by removing the
+need for checkpointing. Similar to Gandiva~\cite{Gandiva}, they utilize
+DL job GPU memory allocation patterns to enable faster context switch.
+They divide the memory used by the deep learning frameworks into three types.
+Ephemeral memory which is allocated and deallocated at every iteration. Model
+memory which is the weights used by the model. The model memory is allocated
+and deallocated once during the training. And the memory required by the
+framework. This is usually smaller than the two other types of memory
+allocations. Using their library, multiple processes can run on the same
+GPU. They use "GPU Lane" which is a logical component of Salus that tasks
+are dispatched to it. GPU lanes are implemented using CUDA streams. They also
+compared their implementation with MPS and achieved higher performance.
+However, their comparisons were based on the Pascal MPS which is not
+the MPS version that we used in this work. Volta MPS comes with greater
+hardware support and fixes some of the errors that was mentioned in the
+paper.
+
+%PiepSwitch
+
+\subsection{Jobs Interference}
+Although interference of co-located DL jobs in GPU clusters has not been well 
+explored, there is a significant body of work on the interference effect of
+co-located jobs in CPU clusters. Quasar~\cite{Quasar} employs
+PQ-reconstruction with Stochastic Gradient Descent, to fill the unspecified
+elements of a matrix. In this matrix, the rows are jobs and the columns are
+different platforms. Quasar first profiles a couple of jobs extensively on a
+number of platforms. For unseen jobs, it profiles the job on a limited set of
+platforms and then uses the PQ-reconstruction to predict the performance on
+unseen platforms. Gavel~\cite{Gavel} used this technique in the "Throughput
+Estimator" to predict the performance of co-location. They treated the
+co-located jobs as a new job and tried to fill in the matrix appropriately.
+
+\subsection{Performance Models for GPU Multitasking}
+HSM~\cite{HSM} provides a hybrid slowdown model that tries to predict the
+performance of the kernels using a hybrid model. The term "hybrid" here
+refers to using both whitebox and blackbox models. For the compute-bound
+models increasing the number of SMs has a linear corelation with the speedup
+while that is not the case for memory-bound applications. The goal
+of this paper was to implement the QoS guarantees using these models.
+HSM was implemented in the GPUSim~\cite{GPUSIM}, a cycle simulator for
+GPUs.
+
+\cite{CUDAStream} presented a performance model for CUDA streams for the
+compute-bound applications. The goal of this paper was to analyse the
+scheduling of the thread blocks on SMs when CUDA streams are enabled. They
+ultimately use these performance models to build a database that uses CUDA
+streams to increase the performance.
+
+\subsection{Scheduling CPUs in Big Data Clusters}
+The problems in CPU scheduling focus on different requirements for scheduling.
+The focus of the works in this area is mainly designing custom schedulers for
+Hadoop~\cite{Hadoop} and Spark~\cite{Spark} clusters. The tasks on these
+clusters are represented by a computation graph similar to DNNs. The
+difference with the DL jobs is that the data is usually dispersed into
+multiple nodes. The problem here is how we should decide on the scheduling of
+each of the subtasks on each node given the data distribution on the nodes in
+the cluster. \cite{DelayScheduling} adds a small amount of delay between
+the scheduling of different jobs. The benefit of this approach is that this
+small delay will help with the availability of nodes where the data for a given
+task is present. Since each task takes a small amount of time, simply waiting
+a bit longer may help with the data locality of the tasks.
+
+Since the latency requirements of scheduling are very important in these
+clusters, there have been some research trying to decentralize the scheduling
+decisions for smaller latency requirements. Sparrow~\cite{Sparrow} is one of
+the projects that focused on designing a decentralized scheduler for these
+clusters. They also provided a mathematical analysis of their scheduling
+mechanism.
+
+There has also been recent papers that use Reinforcement
+Learning~\cite{Decima} techniques to make the scheduling decisions.
 
 \section{Summary}
 We provided an overview of the GPU computation and basics of running

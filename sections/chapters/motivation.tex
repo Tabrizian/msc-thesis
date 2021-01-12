@@ -1,11 +1,13 @@
 \chapter{Motivation}
 \label{chap:motivation}
 
-In this chapter we will discuss the unique characteristics of deep learning
-jobs that make them suitable for co-location. We will discuss why deep learning
-job are not usually able to saturate GPU resources in today's data centers.
+Production GPU clusters suffer from low GPU utilization~\cite{Philly}. In a
+GPU cluster trace published by Microsoft more than 40\% of the jobs only
+utilize 20\% of the GPUs. In this chapter we discuss the potential reasons
+behind why the GPU utilization is low in production GPU clusters and how
+co-location can improve the utilization.
 
-\section{Deep Learning Job Characteristics}
+\section{GPU Cluster Characteristics}
 \subsection{Heterogeneity of GPU Clusters}
 
 \label{sec:hetrogenity}
@@ -18,15 +20,27 @@ amount of memory available on a GPU affects the batch size that the developer
 can choose. Larger batch sizes usually increase the utilization of a GPU. It
 may seem like an obvious choice to divide the GPU memory by batch size to
 fully utilize the GPU. However, not all the GPUs available in the cluster are
-A100 gpus with 80 GBs of memory. In fact, these newer GPUs are more scarce
-than the older GPUs due to the high demand and better performance.
-Users usually end up selecting a larger spectrum of GPUs in order to reduce
-the queuing time for their job to be scheduled. Since users cannot determine
-the effective batch size for their job when they are submitting the job to
-the cluster, they will end-up under utilizing the GPU and choosing smaller
-batch size.
-[Put a figure about increasing batch size and training speed]
+A100 GPUs with 80 GBs of memory. In fact, these newer GPUs are in greater
+demand. Users usually end up selecting a larger spectrum of GPUs in order to
+reduce the queuing time for their job to be scheduled. Since users cannot
+determine the effective batch size for their job when they are submitting the
+job to the cluster, they will end-up under utilizing the GPU and choosing
+smaller batch size.
 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/experiments/image-throughput}
+    \caption{Batch Size vs Throughput}
+    \label{fig:throughput}
+\end{figure}
+
+\Cref{fig:throughput} shows the throughput of different image classification
+models. As we increase the batch size, the increase in throughput decreases.
+This point is different for various models. The takeaway from this figure is
+that apart from the GPU memory limit, the models see diminishing returns on
+increasing the batch size for training.
+
+\section{DL Job Characteristics}
 \subsection{Statistical Constraints}
 Training a deep neural network involves launching many similar jobs with a
 single parameter change in order to find the best set of hyperparameters that
@@ -34,13 +48,14 @@ achieves the best performance. One may argue that the batch size problem
 discussed in \cref{sec:hetrogenity} can be solved by querying the amount of
 GPU memory available by size of memory required for a single batch of data at
 the time the job is being scheduled. Since many different training jobs are
-launched simultaneously, the hyperparameters found for one batch size, may be
+launched simultaneously, the hyperparameters found for one batch size, is 
 different from the hyperparameters for the other job. Because of this, batch
 size for all the jobs that training the same model should be the same.
 
 Another issue is that some machine learning tasks are not able to use large
-batch sizes, and large batch sizes come with diminished returns~\cite{Crossbow,DimmWitted}.
-This constraint further leaves the GPUs underutilized.
+batch sizes, and large batch sizes come with diminishing
+returns~\cite{Crossbow,DimmWitted}. This constraint further leaves the GPUs
+underutilized.
 
 \subsection{Monitoring, Logging, and Data Loading}
 Training a neural network does not only involve GPU computation. A common
@@ -52,8 +67,8 @@ in some academic clusters such as Vector Institute. Preemption helps
 avoiding starvation by giving everyone a fair share of the cluster. These
 tasks lead to leaving the GPU unutilized for many cycles. Using co-location,
 one job can use the GPU while the other job is busy monitoring metrics or
-check pointing.
-[Put a figure about PyTorch hello world CPU task]
+check pointing. This way the GPU is better utilized.
+%[Put a figure about PyTorch hello world CPU task]
 
 \section{GPU Memory and Compute Capabilities}
 
@@ -64,21 +79,21 @@ check pointing.
     \label{fig:gpu-overtime}
 \end{figure}
 
-GPUs memory bandwidth and compute capabilities have increased by a tremendous
+GPU memory bandwidth and compute capabilities have increased by a tremendous
 amount over time. \Cref{fig:gpu-overtime} shows this trend in the Tesla GPU
 class. Tesla GPUs are NVIDIA's data center GPU class. The most recent data
 center GPU class as of writing this thesis is the A100 GPU with the ability
 to perform 312 TFLOPS half-precision operations. These increases in the compute
 and memory capabilities have made it harder for application developers to fully
 saturate the GPU resources. In this thesis, we use co-location to better
-utilize GPUs even if they do not fully utilize the GPU individually.
+utilize GPUs even if the individual jobs cannot fully utilize the GPU.
 
 \section{Summary}
 In this chapter we discussed why co-location of jobs can be beneficial when
 designing schedulers for deep learning jobs. We talked about the unique
-characteristics of deep learning jobs and why they may not be able to fully
-utilize the resources in the cluster. These factors include the statistical
-constraints of the jobs, monitoring, logging or other CPU based tasks, and
-heterogeneity of GPU clusters. In the next chapter, we provide detailed
-profiling results to quantify the amount of speed up that can be gained
-using co-location.
+characteristics of deep learning jobs and GPU clusters and why they may not
+be able to fully utilize the resources in the cluster. These factors include
+the statistical constraints of the jobs, monitoring, logging or other CPU
+based tasks, and heterogeneity of GPU clusters. In the next chapter, we
+provide detailed profiling results to quantify the amount of speed up that
+can be gained using co-location.
