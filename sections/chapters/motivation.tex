@@ -38,20 +38,22 @@ smaller batch size.
 models. As we increase the batch size, the increase in throughput decreases.
 This point is different for various models. The takeaway from this figure is
 that apart from the GPU memory limit, the models see diminishing returns on
-increasing the batch size for training.
+increasing the batch size for training. \textit{batch size} refers to
+the size of the input that is used for training the model.
 
 \section{DL Job Characteristics}
 \subsection{Statistical Constraints}
 Training a deep neural network involves launching many similar jobs with a
 single parameter change in order to find the best set of hyperparameters that
-achieves the best performance. One may argue that the batch size problem
-discussed in \cref{sec:hetrogenity} can be solved by querying the amount of
-GPU memory available by size of memory required for a single batch of data at
-the time the job is being scheduled. Since many different training jobs are
-launched simultaneously, the hyperparameters found for one batch size, is 
-different from the hyperparameters for the other job. Because of this, batch
-size for all the jobs that training the same model should be the same.
-
+achieves the best performance. Throughout the thesis \textit{job} refers to a
+single training experiment of DL model to reach a desired accuracy. One may
+argue that the batch size problem discussed in \cref{sec:hetrogenity} can be
+solved by querying the amount of GPU memory available by size of memory
+required for a single batch of data at the time the job is being scheduled.
+Since many different training jobs are launched simultaneously, the
+hyperparameters found for one batch size, is different from the
+hyperparameters for the other job. Because of this, batch size for all the
+jobs that training the same model should be the same.
 Another issue is that some machine learning tasks are not able to use large
 batch sizes, and large batch sizes come with diminishing
 returns~\cite{Crossbow,DimmWitted}. This constraint further leaves the GPUs
@@ -82,11 +84,13 @@ check pointing. This way the GPU is better utilized.
 GPU memory bandwidth and compute capabilities have increased by a tremendous
 amount over time. \Cref{fig:gpu-overtime} shows this trend in the Tesla GPU
 class. Tesla GPUs are NVIDIA's data center GPU class. The most recent data
-center GPU class as of writing this thesis is the A100 GPU with the ability
-to perform 312 TFLOPS half-precision operations. These increases in the compute
-and memory capabilities have made it harder for application developers to fully
-saturate the GPU resources. In this thesis, we use co-location to better
-utilize GPUs even if the individual jobs cannot fully utilize the GPU.
+center GPU class, as of writing this thesis, is the A100~\cite{Ampere} GPU
+with the ability to perform 312 TFLOPS half-precision operations. These
+increases in the compute and memory capabilities have made it harder for
+application developers to fully saturate the GPU resources. In this thesis,
+we use co-location to better utilize GPUs even if the individual jobs cannot
+fully utilize the GPU. \textit{Co-location} refers to the placement of different
+jobs on the same GPU at the same time.
 
 \section{Summary}
 In this chapter we discussed why co-location of jobs can be beneficial when

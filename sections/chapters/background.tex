@@ -4,14 +4,14 @@
 In this chapter we will discuss some background information related to this
 work. We will discuss the basics of generic programming on GPUs and how
 scheduling multiple processes work on GPUs. We also discuss the related
-work to this project.
+work to this thesis.
 
 \section{Graphical Processing Units (GPUs)}
 
 GPUs were among the first accelerators to be introduced as CPUs
 co-processors. GPUs are throughput optimized in contrast to the CPUs which
 are latency optimized. They consist of many inexpensive cores that can perform
-large number of operations in parallel. They also have a large memory
+a large number of operations in parallel. They also have a large memory
 bandwidth that helps them bring data into these cores efficiently.
 
 \begin{figure}
@@ -47,7 +47,7 @@ GPU memory hierarchy consists of:
     \item \textbf{Shared Memory}: Shared memory is similar to L1 cache except that it is explicitly managed by the user.
     \item \textbf{L2 Cache}: L2 cache is a large cached memory that is shared among all the SMs.
     \item \textbf{Global DRAM Memory}: It is the slowest memory access
-    compared to all the other memory levels described above. This memory is very large. Usually all
+    compared to all the other memory levels described above. This memory is very large (tens of GBs). Usually all
     the data required for a computation is stored in this memory.
 \end{itemize}
 
@@ -58,8 +58,8 @@ in GPUs. CUDA also introduces a set of language abstractions that make it
 easier to think about GPU programs. GPU accelerated programs use many threads
 to perform the computation. CUDA groups the threads into \textit{thread
 blocks} and \textit{grid blocks}. A \textit{thread block} is a group of
-threads which are guaranteed to be running on the same SM. A \textit{grid
-block} is a group of thread blocks which contain all the processing necessary
+threads that are guaranteed to be running on the same SM. A \textit{grid
+block} is a group of thread blocks that contain all the processing necessary
 for the computation of a given \textit{kernel}. A \textit{kernel} is a
 function that runs on a GPU. Both thread blocks and grid blocks can be
 represented using three dimensions. \Cref{fig:threadblock} shows the difference
@@ -74,7 +74,7 @@ between a thread block, grid block, and a thread.
 
 \subsubsection{Thread Block Scheduling}
 There are various constraints that limit the scheduling of thread blocks into
-the SMs. Amount of the registers, shared memory, and number of threads inside
+the SMs. The number of registers, shared memory, and number of threads inside
 a thread block are among the factors that limit the number of blocks that
 can be scheduled into a single SM. Since there is a limited amount of these
 resources available in each SM, the number of thread blocks will be limited
@@ -82,13 +82,14 @@ to the available resources. Apart from that, different GPU architectures
 have hard limits on the number of thread blocks and threads that can
 be scheduled on a given SM. All these factors lead to a metric called
 \textit{Theoretical Occupancy}\cite{Occupancy} of a kernel. Theoretical
-Occupancy is a metric in percent which determines the percentage of active
+Occupancy is a metric in percent that determines the percentage of active
 warps in comparison with the total warps that could be scheduled on a given
-GPU. There is another concept called \textit{Achieved Occupancy}. Achieved
+GPU. \textit{warp} is a group of threads that are scheduled together. 
+There is another concept called \textit{Achieved Occupancy}. Achieved
 Occupancy measures the scheduled number of warps when the kernel is
 actually running on the GPU. This can be different from the Theoretical
 Occupancy because a given thread in a warp might be stalled on a memory load
-and may not be ready to be scheduled. If there is not enough warps inflight
+and may not be ready to be scheduled. If there are not enough warps inflight
 ready to be scheduled, the achieved occupancy will be lower than the
 Theoretical Occupancy. Theoretical Occupancy
 serves as the upper bound for the Achieved Occupancy.
@@ -137,7 +138,7 @@ communication to speedup the Kernel execution.
 MPS~\cite{MPS} is a mechanism that enables packing multiple processes
 together without having to time-share the GPU. MPS achieves this by using a
 client-server architecture. All the processes that want to run on the 
-GPU are submitted to the the MPS server. MPS is useful when an individual
+GPU are submitted to the MPS server. MPS is useful when an individual
 job is not able to saturate all the GPU resources. Before Volta, MPS
 could not isolate the memory address of different CUDA contexts running
 on the same GPU. After Volta, MPS has improved the address space isolation
@@ -168,9 +169,10 @@ on training of artificial neural networks with many layers. Artificial Neural
 Networks (ANNs) are function approximators that are proven to be
 universal~\cite{universal}. It means that they can approximate any measurable
 function to any desired degree of accuracy. This feature combined with the
-advances in hardware enabled end-to-end learning algorithms that are able
-to generalize well in different domains of Natural Language Processing~\cite{gpt},
-Computer Vision~\cite{alexnet}, and Speech Recognition.
+advances in hardware and availability of large-scale datasets enabled
+end-to-end learning algorithms that are able to generalize well in different
+domains of Natural Language Processing~\cite{gpt}, Computer
+Vision~\cite{alexnet}, and Speech Recognition.
 
 \begin{figure}
     \centering
@@ -182,18 +184,19 @@ Computer Vision~\cite{alexnet}, and Speech Recognition.
 \Cref{fig:feedforwardnn} shows a simple illustration of a four-layer neural
 network. In this figure, there are four layers in total. The first layer
 contains the input data and the last layer is called the output layer. The
-intermediate layers in this network is called the hidden layers. Each of the
+intermediate layers in this network are called the hidden layers. Each of the
 nodes in these layers is called a neuron. Each neuron in every layer needs to
 use a function for activation. The ultimate goal of a neural network is to
 learn a set of weights that perform best on the test data set. The process
 of learning the optimal weights is referred to as \textit{Training}. The
 neural network starts with random weights. During each iteration of the
 training a sample from the training data set is passed in the forward
-direction known as \textit{forward pass}. In the output layer, neural network
-compares the calculated output with the expected output and calculates the
-difference between them using a metric known as \textit{loss}. Loss is a
-scalar value, which will be propagated backward into the network and the
-weights are updated for each layer. The updates for each layer is calculated
+direction known as the \textit{forward pass}. In the output layer, the neural
+network compares the calculated output with the expected output and
+calculates the difference between them using a metric known as \textit{loss}.
+Loss is a scalar value, which will be propagated backward into the network
+and the weights are updated for each layer. The updates for each layer is
+calculated
 by computing the partial derivatives with respect to the previous layer.
 These updates along with a learning rate and an optimization algorithm will
 determine the weights for the next iteration.
@@ -213,25 +216,25 @@ manner.
 
 \section{Machine Learning Frameworks}
 
-Machine Learning frameworks where introduced to enable easier adaption of new
+Machine Learning (ML) frameworks where introduced to enable easier adaption of new
 deep learning techniques and help with democratization of research in this
 area. The mainstream frameworks are specifically designed to help with
 adoption of deep learning on specialized hardwares such GPUs or TPUs. These
 frameworks are usually implemented in C++ for better performance with APIs in
 the languages that the community prefers like Python. Designing a deep
-learning framework is a very challenging task. DL frameworks have to adapt
+learning framework is a very challenging task. ML frameworks have to adapt
 very quickly with the latest versions of the accelerators. New accelerators
 are announced around every year. With multiple accelerators present in this field,
 making sure that you have the best performing algorithm on the new hardware
 is not easy. Also, there are new models being introduced on a daily
 basis. Making sure that all the state-of-the-art models produce the same
-result on this large spectrum of hardware of software versions is almost an
+result on this large spectrum of hardware and software versions is an almost
 impossible task. Because of this, mainstream frameworks are usually a result
 of collaboration between hardware vendors and big software companies.
 
 \subsection{Tensorflow}
 \label{subsec:tensorflow}
-Tensorflow~\cite{Tensorflow} is one of the first mainstream DL frameworks
+Tensorflow~\cite{Tensorflow} is one of the first mainstream ML frameworks
 open sourced by Google. Tensorflow uses a \textit{computation graph} to
 describe all the computation necessary to achieve a task. When using a
 computation graph, the user has to specify all the operations that it needs
@@ -247,8 +250,10 @@ omniscience view of the whole computation to perform the optimizations.
 \subsection{PyTorch}
 \label{subsec:pytorch}
 PyTorch~\cite{PyTorch} introduced in 2016 by Facebook with the focus on
-developer productivity. PyTorch uses autograd to automatically store the
+developer productivity. PyTorch uses \textit{autograd} to automatically store the
 necessary information for calculating the gradient of arbitrary PyTorch code.
+\textit{Autograd} is PyTorch's automattic differentiation engine that allows
+to easily calculate the derivative of different sections of Python code.
 Also, instead of using a computation graph, PyTorch uses an imperative
 programming model that increases the developer productivity. Some research
 frameworks~\cite{Janus} have also taken a hybrid approach to maintain both a
@@ -282,11 +287,10 @@ the GPUs.
 
 Tiresias~\cite{Tiresias} presented a more realistic scheduling algorithm.
 Tiresias is able to use the historical data of the jobs to minimize the job
-completion time. They do not adaptively change the number of workers for a 
-given job. This is a more realistic approach since increasing the number
-of workers affects the accuracy and may require retuning all the
-hyperparameters. They do not consider the packing of multiple jobs on the
-same GPU.
+completion time. They do not adaptively change the number of workers for a
+given job. This is a more realistic approach since increasing the number of
+workers may require retuning all the hyperparameters and may affect the
+accuracy. They do not consider the packing of multiple jobs on the same GPU.
 
 \begin{figure}
     \centering
@@ -306,16 +310,20 @@ memory usage of a job is not constant during the training and is minimum
 between the iterations. \Cref{fig:memory-allocation-frameworks} shows how memory
 allocation is performed during the training. In this figure, we are assuming
 the training of a convolutional neural network~\cite{CNN}. The weights
-associated with each layer is always present in the GPU. As the input
+associated with each layer are always present in the GPU. As the input
 traverses different layers of the neural network, it creates
 \textit{activations}. Activations must be stored for each layer. The
-activations are required for calculating the gradients in \cref{eq:sgd}.
+activations are required for calculating the gradients in \cref{eq:sgd}. \Cref{eq:sgd}
+presents the updates for each iteration.  Represents the gradient
+w.r.t. the current state of the model is represented using $\nabla Q(w(t))$.
+Learning rate is represented using $\eta$.
+
 These gradients will be calculated during the backward pass. In the backward
 pass, the activation values can be discarded and as a consequence the memory
 allocated for each of the layers may be freed. Gandiva leverages this pattern,
 and does not interrupt the job during the forward or backward passes to reduce
 the amount of data that needs to be copied during the checkpointing process.
-Gandiva also included a mechanism for "packing" the jobs to reduce the queuing
+Gandiva also included a mechanism for ``packing" the jobs to reduce the queuing
 time and improve JCT. They employed random packing to find the matching job
 pairs. As mentioned in~\cite{Gavel}, this strategy is not sufficient for finding
 beneficial co-locations.
@@ -325,7 +333,7 @@ using a reinforcement learning algorithm. They showed that using reinforcement
 learning will lead to better results compared to Optimus~\cite{Optimus}. However,
 they still didn't consider the packing of multiple jobs into a single GPU.
 
-Gavel~\cite{Gavel} was the first scheduler to design an scheduling mechanism
+Gavel~\cite{Gavel} was the first scheduler to design a scheduling mechanism
 that can use many different scheduling objectives. Gavel has support for
 hierarchical and multi-domain scheduling policies. Their modeling of the
 scheduling problem is able to take into account packing of multiple jobs
@@ -343,7 +351,7 @@ memory which is the weights used by the model. The model memory is allocated
 and deallocated once during the training. And the memory required by the
 framework. This is usually smaller than the two other types of memory
 allocations. Using their library, multiple processes can run on the same
-GPU. They use "GPU Lane" which is a logical component of Salus that tasks
+GPU. They use ``GPU Lane" which is a logical component of Salus that tasks
 are dispatched to it. GPU lanes are implemented using CUDA streams. They also
 compared their implementation with MPS and achieved higher performance.
 However, their comparisons were based on the Pascal MPS which is not
@@ -362,13 +370,13 @@ elements of a matrix. In this matrix, the rows are jobs and the columns are
 different platforms. Quasar first profiles a couple of jobs extensively on a
 number of platforms. For unseen jobs, it profiles the job on a limited set of
 platforms and then uses the PQ-reconstruction to predict the performance on
-unseen platforms. Gavel~\cite{Gavel} used this technique in the "Throughput
+unseen platforms. Gavel~\cite{Gavel} used this technique in the ``Throughput
 Estimator" to predict the performance of co-location. They treated the
 co-located jobs as a new job and tried to fill in the matrix appropriately.
 
 \subsection{Performance Models for GPU Multitasking}
 HSM~\cite{HSM} provides a hybrid slowdown model that tries to predict the
-performance of the kernels using a hybrid model. The term "hybrid" here
+performance of the kernels using a hybrid model. The term ``hybrid" here
 refers to using both whitebox and blackbox models. For the compute-bound
 models increasing the number of SMs has a linear corelation with the speedup
 while that is not the case for memory-bound applications. The goal
@@ -376,7 +384,7 @@ of this paper was to implement the QoS guarantees using these models.
 HSM was implemented in the GPUSim~\cite{GPUSIM}, a cycle simulator for
 GPUs.
 
-\cite{CUDAStream} presented a performance model for CUDA streams for the
+G-SDMS\cite{CUDAStream} presented a performance model for CUDA streams for the
 compute-bound applications. The goal of this paper was to analyse the
 scheduling of the thread blocks on SMs when CUDA streams are enabled. They
 ultimately use these performance models to build a database that uses CUDA
@@ -412,3 +420,11 @@ CUDA accelerated applications on GPUs. We also discussed how running
 multiple tasks on the same GPU work. Additionally, we discussed
 some of the mainstream ML frameworks and what are some of the
 programming paradigms in these frameworks.
+
+While some of the previous work mentioned co-location of multiple jobs into
+the same GPU as a way to increase the GPU utilization, they didn't focus on
+the reasons behind why jobs interference exists and how can we can minimize
+the interference that results from co-location of multiple jobs together.
+This is the first work to study the reasons behind the interference of
+multiple deep learning training jobs and provides metrics to measure the
+speedup and identify promising combinations.

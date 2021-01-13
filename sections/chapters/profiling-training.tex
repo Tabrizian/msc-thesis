@@ -11,10 +11,10 @@ speedup, compared to the original case.
 
 We are given n jobs that can be co-located all together on a single GPU. The
 time that it takes for a single iteration of job $i$ to complete when running
-alone is $t_i$. $t'_{i, S}$ denotes the time for single iteration of job $i$
-to complete when being co-located with jobs that belong to $S \subset J$. J
-is the universal set containing all the jobs. We are interested in cases
-where the ratio of the sum of the jobs time running individually to the
+alone is $t_i$. Define $t'_{i, S}$ as the time for single iteration of job $i$
+to complete when being co-located with jobs that belong to $S \subset J$.
+The universal set J contains all the jobs. We are interested in cases
+where the ratio of the sum of the jobs' time running individually to the
 longest job time when being co-located is greater than 1, i.e. yields
 speedup. This is represented mathematically in \cref{eq:speedup}.
 

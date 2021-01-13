@@ -8,19 +8,20 @@ as GPUs, TPUs\cite{TPU}, and FPGAs. The process of training these models is a
 trial-and-error approach combined with intuition. It requires tuning a large
 number of hyperparameters to achieve a desired accuracy. To achieve the best
 accuracy in the shortest amount of time, usually many similar jobs are
-dispatched that only change a single hyperparameter. Research institutes and
-companies have access to large compute clusters. These compute clusters
-require a scheduler to map the jobs to the resources. The users of the jobs
-need to specify the resource requirements of the jobs too. The scheduler will
-take in these specifications and map it to the the available resources. GPUs
-with their unique characteristics add a new dimension to this problem. The
-main problem with the GPUs is that they were not originally designed for
-multi-tasking. Unlike conventional resources like CPUs and main memory, that
-have hardware support for resource sharing, GPUs were originally designed for
-single process use. The assumption was that the application is able to
-effectively use all the resources on a GPU and adding another application to
-the GPU will hinder the performance. However, starting from the
-Volta\cite{Volta} architecture GPUs now include hardware support for
+dispatched that only change a single hyperparameter.
+
+Research institutes and companies have access to large compute clusters.
+These compute clusters require a scheduler to map the jobs to the resources.
+The users of the jobs need to specify the resource requirements of the jobs
+too. The scheduler will take in these specifications and map it to the the
+available resources. GPUs with their unique characteristics add a new
+dimension to this problem. The main problem with the GPUs is that they were
+not originally designed for multi-tasking. Unlike conventional resources like
+CPUs and main memory, that have hardware support for resource sharing, GPUs
+were originally designed for single process use. The assumption was that the
+application is able to effectively use all the resources on a GPU and adding
+another application to the GPU will hinder the performance. However, starting
+from the Volta\cite{Volta} architecture GPUs now include hardware support for
 execution of multiple processes together.
 
 In this thesis, we explore the effect of co-locating multiple deep learning
@@ -48,9 +49,9 @@ scheduler that uses co-location. We provide an algorithm that uses
 the profiling information from \cref{chap:profiling-training} to
 identify co-locations that will lead to speedup.
 
-\Cref{chap:evaluation} this chapter provides end-to-end evaluation of the
+\Cref{chap:evaluation} provides end-to-end evaluation of the
 co-location algorithm. We study the effect of co-location in two different
 scenarios. 
 
-\Cref{chap:future} concludes the paper and discusses the potential future
+\Cref{chap:future} concludes the thesis and discusses the potential future
 research directions that can be built on this work.
